@@ -7,7 +7,7 @@ Up until now all tools that help you calculate your monthly expenses require you
 and enter them into some sort of expense calculator. This requires a lot of effort and is 
 error prone. 
 This script extracts the information directly from your bank account transactions.
-It will work well even if you have multiple back accounts, investments and credit cards.
+It will work well even if you have multiple bank accounts, investments and credit cards.
 The only condition is that all your expenses eventually land in your current account. This is
 the case for most people.
 
