@@ -1,6 +1,7 @@
 # The Effortless Monthly Expense Calculator
 #
 # By Clive Bluston 
+# 2nd June 2022
 #
 #  Up until now all tools that help you calculate your monthly expenses require you to collect
 # and enter them into some sort of expense calculator. This requires a lot of effort and is 
@@ -21,44 +22,53 @@
 # pip install openpyxl
 #
 # Generate an Excel file of your transactions as follows:
-# Login to Bank in a browser
-# Set to English (Hebrew can be supported by adjusted the script)
-# Go to your Current Account transactions.
-# Select 12 months of transactions using the menu.
-# Select Export to Excel using the Export menu.
-# Save the file.
+# 1. Login to Bank in a browser
+# 2. Set to English (Hebrew can be supported by adjusted the script)
+# 3. Go to your Current Account transactions.
+# 4. Select 12 months of transactions using the menu.
+# 5. Select Export to Excel using the Export menu.
+# 6. Save the file.
 # Run as follows:
 # python expenseCalc.py Current Account_29052022_0749.xlsx
 
-# Import pandas
+# Imports
 import pandas as pd
 import re
 import sys
 import datetime
 
-#print(pd.__version__)
 
 class TransactionAnalyzer:
     # Abstract class. You need to create a subclass for each Bank
 
-    def analyze(self):
+    # Analyze the transaction file.
+    # Parameters:
+    # fileName - A string representing the name of the file to be analyzed
+    # nonBankMonthlyExpenses - A list of tuples of the form [ expense description, sum ] with an entry for each non-bank expense.
+    def analyze(self, fileName, nonBankMonthlyExpenses):
         # Load spreadsheet
-        xl = pd.ExcelFile(file)
+        xl = pd.ExcelFile(fileName)
 
-        # Print the sheet names
         #print(xl.sheet_names)
 
         # Load a sheet into a DataFrame by name: df1. Forst row is 9 (Which is 8 when zero based)
         df = xl.parse(self.sheetName, header=self.firstRow)
-
+        
         # Initial values
         sum = 0
+        totalMonthlyExpenses = 0
         extraordinary = 0
         income = 0
         months = [0,0,0,0,0,0,0,0,0,0,0,0]
         # Fixed number of Months. A future improvement would be to calculate this from the data.
         numberOfMonths = 12
 
+        # Calculate non bank expenses per month
+        for expense in nonBankMonthlyExpenses:
+            totalMonthlyExpenses -= expense[1]
+        # Now for the whole period
+        sum = totalMonthlyExpenses * numberOfMonths
+        
         # Iterate over all transactions
         for index, row in df.iterrows():
           description = row[self.descriptionColumnName]
@@ -83,20 +93,18 @@ class TransactionAnalyzer:
             else:
               # Accumulate the monthly value.
               months[dt.month -  1] += value
-
-              
+            # Accumulate the total value
             sum += value
           else:  # Value > 0
             if re.search(self.includeRegex,description) != None:
-              # Accumulate returned expenses
+              # Accumulate expenses that ere returned to your account.
               sum += value;
               print("Returned expense: ",date," ",description," ",value)
             elif re.search(self.incomeRegex,description) != None:
               # Accumulate income
               income += value
 
-            
-          
+        # Output
         print("\nTotal= %d Monthly= %d"%(abs(sum),abs(sum)/numberOfMonths))
 
         # Print again excluding extraordinary expenses.
@@ -108,14 +116,11 @@ class TransactionAnalyzer:
         # Print monthly values. Not very accurate because we may start in the middle of a month, 
         # so part of the month maybe from previous year.
         print("\nExpenses by month.")
-        for month in range(1,13):
-          print(month," - %d"% abs(months[month - 1]))
-          
+        for month in range(0,numberOfMonths):
+          print(month," - %d"% abs(months[month] + totalMonthlyExpenses))
+        # Income
         print("\nSalary total = %d Monthly = %d."%(abs(income),abs(income)/numberOfMonths))
 
-  
-
-   
    
 class TransactionAnalyzer_BankDiscountEnglish(TransactionAnalyzer):
    # This a bank/language specific subclass. Use it as a template for a new bank or language.
@@ -163,22 +168,33 @@ class TransactionAnalyzer_BankDiscountEnglish(TransactionAnalyzer):
         # If not, we could look inside the file.
         return re.search("Current Account.*_....\.xlsx",fileName)
 
+
 # Main
-# Check argument
+# Check arguments
 if len(sys.argv) != 2:
-   print("Please specify an xlsx file with 12 months of transactions from Bank Discount(English) on the command line.")
+   print("Please specify an xlsx file with 12 months of transactions on the command line.")
    exit()
    
 # First argument is the Spreadsheet filename. Ignore the rest.
-file = sys.argv[1]
+fileName = sys.argv[1]
 
 analyzer = None
-if TransactionAnalyzer_BankDiscountEnglish.checkFile(file) != None:
+# Select an analyzer
+if TransactionAnalyzer_BankDiscountEnglish.checkFile(fileName) != None:
     analyzer = TransactionAnalyzer_BankDiscountEnglish()
 # elif Other bank here
-    
+
+# Customize these
+# These are expenses that are paid directly out of your salary and do not go through any bank account or credit card.
+nonBankMonthlyExpenses = [\
+                          ["Company meal card",500],\
+                          ["Company car",0],\
+                          ["Company medical insurance",0]\
+                         ]
+
+# Analyze if we found a suitable analyzer
 if analyzer:
-    analyzer.analyze()
+    analyzer.analyze(fileName, nonBankMonthlyExpenses)
 else:
     print("The bank could not be identified from the file.")
 
