@@ -1,3 +1,14 @@
+# Generate an Excel file of your transactions as follows:
+# 1. Login to Bank in a browser
+# 2. Set to English (Hebrew can be supported by adjusted the script)
+# 3. Go to your Current Account transactions.
+# 4. Select 12 months of transactions using the menu.
+# 5. Select Export to Excel using the Export menu.
+# 6. Save the file.
+# Run as follows in Windows Terminal:
+# (You can run it in Windows cmd, but it does not support languages other than English)
+# python postalBank.py Movement.xlsx
+
 from expenseCalc import TransactionAnalyzer
 import sys
 import re
@@ -12,6 +23,8 @@ class TransactionAnalyzer_PostalBankHebrew(TransactionAnalyzer):
 
         # Excel Sheet name
         self.sheetName = "Current Account"
+        self.bankName = "Postal Bank"
+        self.currency = "Shekels"
 
         # Excel column names
         self.dateColumnName = "תאריך פעילות"
@@ -52,10 +65,11 @@ class TransactionAnalyzer_PostalBankHebrew(TransactionAnalyzer):
 
             #print(xl.sheet_names)
 
-            # First row is the title row of the sheet. It is 9 (Which is 8 when zero based)
+            # First row is the title row of the sheet. It is 1 (Which is 0 when zero based)
             firstRow = 0
-            # Load a sheet into a DataFrame by name: df1. First row is 9 (Which is 8 when zero based)
+            # Load a sheet into a DataFrame by name: df1.
             dataframe = xl.parse("Movement", header=firstRow)
+            
             return dataframe
         else:
             return None

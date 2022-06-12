@@ -1,3 +1,14 @@
+# Generate an Excel file of your transactions as follows:
+# 1. Login to Bank in a browser
+# 2. Set to English (Hebrew can be supported by adjusted the script)
+# 3. Go to your Current Account transactions.
+# 4. Select 12 months of transactions using the menu.
+# 5. Select Export to Excel using the Export menu.
+# 6. Save the file.
+# Run as follows in Windows Terminal:
+# (You can run it in Windows cmd, but it does not support languages other than English)
+# python bankDiscount.py Current Account_29052022_0749.xlsx
+
 from expenseCalc import TransactionAnalyzer
 import sys
 import re
@@ -11,6 +22,8 @@ class TransactionAnalyzer_BankDiscountEnglish(TransactionAnalyzer):
 
         # Excel Sheet name
         self.sheetName = "Current Account"
+        self.bankName = "Bank DIscount"
+        self.currency = "Shekels"
 
         # Excel column names
         self.dateColumnName = "Date"
@@ -43,7 +56,8 @@ class TransactionAnalyzer_BankDiscountEnglish(TransactionAnalyzer):
         self.includeRegex = ".*Transfer From Account 12-799-0095-000000000.*"
 
         # Everything here is income (Salary etc.)
-        self.incomeRegex = "SALARY"
+        self.incomeRegex = "SALARY" + "|" +\
+                           "CREDIT FROM MASAV"
         
         # Anything equal to and above this is an extraordinary expense.
         # We show results that both exclude and include extraordinary expenses.

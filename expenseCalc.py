@@ -20,20 +20,12 @@
 # python.exe -m pip install --upgrade pip
 # pip install pandas
 # pip install openpyxl
+# pip install matplotlib
 #
-# Generate an Excel file of your transactions as follows:
-# 1. Login to Bank in a browser
-# 2. Set to English (Hebrew can be supported by adjusted the script)
-# 3. Go to your Current Account transactions.
-# 4. Select 12 months of transactions using the menu.
-# 5. Select Export to Excel using the Export menu.
-# 6. Save the file.
-# Run as follows in Windows Terminal:
-# (You can run it in Windows cmd, but it does not support languages other than English)
-# python expenseCalc.py Current Account_29052022_0749.xlsx
 
 # Imports
 import pandas as pd
+import matplotlib.pyplot as plt
 import re
 import datetime
 import json
@@ -89,7 +81,7 @@ class TransactionAnalyzer:
 
             # Exclude known non-expenses.
             if re.search(self.excludeRegex,description) != None:
-                print("Exclude:",description)
+                #print("Exclude:",description)
                 continue
 
             value = self.__extractValue(row)
@@ -160,6 +152,7 @@ class TransactionAnalyzer:
         months = [0,0,0,0,0,0,0,0,0,0,0,0]
         # Fixed number of Months. A future improvement would be to calculate this from the data.
         numberOfMonths = 12
+        lastDate = " "
 
         # Calculate non bank expenses per month
         for expense in nonBankMonthlyExpenses:
@@ -173,25 +166,34 @@ class TransactionAnalyzer:
 
             # Stop on end of data
             if type(description) != str or description == " ":
+                # On the last row record the date. This is the oldest.
+                startDate = lastDate
                 break
+                
+            # Just in case there is a dirty date value we convert it to datetime.
+            lastDate = pd.to_datetime(row[self.dateColumnName])
+
+            # On the first row record the date. This is the latest.
+            if index == 0:
+                endDate = lastDate
 
             # Exclude known non-expenses and investments
             if re.search(self.excludeRegex,description) != None or description in self.investmentsSet:
                 #print("Exclude:",description)
                 continue
 
+            # Get the value.
             value = self.__extractValue(row)
 
             if value < 0:
-                date = row[self.dateColumnName]
-                dt = pd.to_datetime(date)
+                dt = pd.to_datetime(lastDate)
                 # Display and collect extrordinary expenses.
                 if value < -self.extraordinaryExpenseFloor:
                     extraordinary += value
-                    print("Extraordinary expense: ",date," ",description," ",value)
+                    print("Extraordinary expense: ",lastDate," ",description," ",value)
                 else:
                     # Accumulate the monthly value.
-                    months[dt.month -  1] += value
+                    months[dt.month -  1] -= value
                 # Accumulate the total value
                 sum += value
             else:  # Value > 0
@@ -203,22 +205,53 @@ class TransactionAnalyzer:
                     # Accumulate income
                     income += value
 
-        # Output
-        print("\nTotal expenses = %d Monthly = %d"%(abs(sum),abs(sum)/numberOfMonths))
+        monthNames =  ['January', 'February', 'March','April','May','June','July','August','September','October','November','December']
+
+        # Console Output
+        toatlExpenseText = "Total expenses = {:.2f} Monthly= {:.2f}".format(abs(sum),abs(sum)/numberOfMonths)
+        print(toatlExpenseText)
 
         # Print again excluding extraordinary expenses.
         sum = sum - extraordinary
+        averageMonthly = abs(sum)/numberOfMonths
 
         print("\nExcluding extraordinary expenses:")
-        print("Total expenses = %d Monthly= %d"%(abs(sum),abs(sum)/numberOfMonths))
+        #print("Total expenses = %d Monthly= %d"%averageMonthly)
+        expenseText = "Total expenses = {:.2f} Monthly= {:.2f}".format(abs(sum),averageMonthly)
+        print(expenseText)
 
         # Print monthly values. Not very accurate because we may start in the middle of a month,
         # so part of the month maybe from previous year.
         print("\nExpenses by month.")
         for month in range(0,numberOfMonths):
-            print("%10s"%datetime.date(1900, month + 1, 1).strftime('%B')," "," - %d"% abs(months[month] + totalMonthlyExpenses))
+            print("%10s"%datetime.date(1900, month + 1, 1).strftime('%B')," "," - %d"% abs(months[month] - totalMonthlyExpenses))
         # Income
-        print("\nTotal salary = %d Monthly = %d."%(abs(income),abs(income)/numberOfMonths))
+        monthlySalary = income/numberOfMonths
+        salaryText = "\nTotal salary = {:.2f} Monthly = {:.2f}".format(abs(income),monthlySalary)
+        print(salaryText)
+
+        # Bar chart output.
+        # Put all the information on a bar chart
+        data = {
+            'Expenses': [],
+            'Salary':[]
+        }
+        for month in range(0,numberOfMonths):
+            data['Expenses'].append(abs(months[month] - totalMonthlyExpenses))
+            data['Salary'].append(monthlySalary)
+        
+        monthly = pd.DataFrame(data, index=monthNames)
+           
+        plotTitle = self.bankName +\
+                    "- from: " + startDate.strftime("%d/%m/%Y") + " to: " + endDate.strftime("%d/%m/%Y") +\
+                    salaryText + "\n" +\
+                    expenseText
+        
+        ax = monthly.plot.barh(title=plotTitle, stacked=False, grid=True, color = {"Expenses" :"red","Salary":"green"})
+        ax.set_xlabel(self.currency)
+        ax.set_ylabel("Month")
+
+        plt.show()
 
 
 

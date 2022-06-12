@@ -17,11 +17,13 @@
 # pip install pandas
 # pip install openpyxl
 # pip install tabula-py
+# Also install Java from https://www.java.com/download/ie_manual.jsp
 
 from expenseCalc import TransactionAnalyzer
 import sys
 import re
 import tabula
+import pandas as pd
 
 class TransactionAnalyzer_Pepper(TransactionAnalyzer):
     # This a bank/language specific subclass. Use it as a template for a new bank or language.
@@ -31,13 +33,16 @@ class TransactionAnalyzer_Pepper(TransactionAnalyzer):
 
         # Excel Sheet name
         self.sheetName = "Current Account"
+        self.bankName = "Pepper"
+        self.currency = "Shekels"
 
         # Excel column names
-        self.dateColumnName = "Date"
+        # In Pepper they use some crazy Hebrew encoding. It looks OK in pdf, but when copied this is what we get.
+        self.dateColumnName = "ךיראת"
         self.creditDebitValueColumnName = None
-        self.creditValueColumnName = "זכות"
-        self.debitValueColumnName = "חובה"
-        self.descriptionColumnName = "תאור פעולה"
+        self.creditValueColumnName = "תמאך"
+        self.debitValueColumnName = "האוח"
+        self.descriptionColumnName = "ךיאר"
 
         # Transfers to my accounts and investment costs:
         # Purchase of shares
@@ -66,12 +71,23 @@ class TransactionAnalyzer_Pepper(TransactionAnalyzer):
         # Try to identify the bank/language according to the name of the file.
         # If not, we could look inside the file.
         if re.search("Monthly account statement.*\.pdf",fileName):
-            dataframe = tabula.read_pdf(fileName, pages='all')[0]
-            # convert PDF into CSV
+            # Read the pdf. Generats a list of DataFrames.
+            dataframeList = tabula.read_pdf(fileName, pages='all',encoding="utf-8")
+            # Count pages
+            pageCount = len(dataframeList)
+
+            df_combined = pd.DataFrame([])
             #tabula.convert_into(fileName, "postbank.csv", output_format="csv", pages='all')
-            if dataframe is not None:
-                print(dataframe)
-                return dataframe
+            
+            # Combine all pages into one DataFrame
+            for page in range(pageCount):
+                df_combined = pd.concat([df_combined,dataframeList[page]],)
+                
+            for col in df_combined.columns:
+                print(col)
+            if df_combined is not None:
+                print(df_combined)
+                return df_combined
         else:
             return None
             
