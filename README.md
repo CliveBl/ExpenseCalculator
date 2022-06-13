@@ -19,13 +19,19 @@ Run as follows in Windows Terminal:
 python bankDiscount.py Current Account_29052022_0749.xlsx
 
 
-Libraries that may need installing
+Libraries that may need installing:
+
 \# python.exe -m pip install --upgrade pip
+
 \# pip install pandas
+
 \# pip install openpyxl
+
 \# pip install matplotlib
 
 For pdf statements only:
+
 \# pip install tabula-py
+
 \# Also install Java from https://www.java.com/download/ie_manual.jsp
 
