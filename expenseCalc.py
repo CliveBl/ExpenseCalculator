@@ -111,7 +111,7 @@ class TransactionAnalyzer:
                 # If it was not <enter>
                 if index:
                     # Check that input is a single digit.
-                    if index.isdigit() and len(index) == 1:
+                    if index.isdigit() and len(index) != 0:
                         index = int(index) - 1
                         description = askUserList[index]
                         # Add it to the investments set
@@ -121,7 +121,7 @@ class TransactionAnalyzer:
                         # Ask again
                         index = 1
                     else:
-                        print("Enter a single digit or <enter>")
+                        print("Enter a menu item or <enter>")
 
             # Transfer what is left to expensesSet. We will save this so that we will never ask again.
             for expense in askUserList:
@@ -149,7 +149,8 @@ class TransactionAnalyzer:
         totalMonthlyExpenses = 0
         extraordinary = 0
         income = 0
-        months = [0,0,0,0,0,0,0,0,0,0,0,0]
+        expensesPerMonth = [0,0,0,0,0,0,0,0,0,0,0,0]
+        salaryPerMonth = [0,0,0,0,0,0,0,0,0,0,0,0]
         # Fixed number of Months. A future improvement would be to calculate this from the data.
         numberOfMonths = 12
         lastDate = " "
@@ -185,15 +186,15 @@ class TransactionAnalyzer:
             # Get the value.
             value = self.__extractValue(row)
 
+            dt = pd.to_datetime(lastDate)
             if value < 0:
-                dt = pd.to_datetime(lastDate)
                 # Display and collect extrordinary expenses.
                 if value < -self.extraordinaryExpenseFloor:
                     extraordinary += value
                     print("Extraordinary expense: ",lastDate," ",description," ",value)
                 else:
                     # Accumulate the monthly value.
-                    months[dt.month -  1] -= value
+                    expensesPerMonth[dt.month -  1] -= value
                 # Accumulate the total value
                 sum += value
             else:  # Value > 0
@@ -204,6 +205,7 @@ class TransactionAnalyzer:
                 elif re.search(self.incomeRegex,description) != None:
                     # Accumulate income
                     income += value
+                    salaryPerMonth[dt.month -  1] += value
 
         monthNames =  ['January', 'February', 'March','April','May','June','July','August','September','October','November','December']
 
@@ -222,9 +224,9 @@ class TransactionAnalyzer:
 
         # Print monthly values. Not very accurate because we may start in the middle of a month,
         # so part of the month maybe from previous year.
-        print("\nExpenses by month.")
+        print("\n  Month      Expenses   Salary")
         for month in range(0,numberOfMonths):
-            print("%10s"%datetime.date(1900, month + 1, 1).strftime('%B')," "," - %d"% abs(months[month] - totalMonthlyExpenses))
+            print("%10s"%datetime.date(1900, month + 1, 1).strftime('%B'),"  - %6d"% abs(expensesPerMonth[month] - totalMonthlyExpenses),"   %d"%salaryPerMonth[month])
         # Income
         monthlySalary = income/numberOfMonths
         salaryText = "\nTotal salary = {:.2f} Monthly = {:.2f}".format(abs(income),monthlySalary)
@@ -237,8 +239,8 @@ class TransactionAnalyzer:
             'Salary':[]
         }
         for month in range(0,numberOfMonths):
-            data['Expenses'].append(abs(months[month] - totalMonthlyExpenses))
-            data['Salary'].append(monthlySalary)
+            data['Expenses'].append(abs(expensesPerMonth[month] - totalMonthlyExpenses))
+            data['Salary'].append(salaryPerMonth[month])
         
         monthly = pd.DataFrame(data, index=monthNames)
            

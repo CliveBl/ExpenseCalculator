@@ -27,7 +27,7 @@ class TransactionAnalyzer_PostalBankHebrew(TransactionAnalyzer):
         self.currency = "Shekels"
 
         # Excel column names
-        self.dateColumnName = "תאריך פעילות"
+        self.dateColumnName = "תאריך תמצית"
         self.creditDebitValueColumnName = None
         self.creditValueColumnName = "זכות"
         self.debitValueColumnName = "חובה"
@@ -99,5 +99,5 @@ nonBankMonthlyExpenses = [\
 if analyzer:
     analyzer.analyze(df, nonBankMonthlyExpenses)
 else:
-    print("The bank could not be identified from the file.")
+    print("The bank could not be identified from the file: {}",fileName)
     

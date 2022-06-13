@@ -117,4 +117,4 @@ nonBankMonthlyExpenses = [\
 if analyzer:
     analyzer.analyze(df, nonBankMonthlyExpenses)
 else:
-    print("The bank could not be identified from the file.")
+    print("The bank could not be identified from the file: {}",fileName)
