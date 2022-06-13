@@ -28,11 +28,7 @@ import pandas as pd
 class TransactionAnalyzer_Pepper(TransactionAnalyzer):
     # This a bank/language specific subclass. Use it as a template for a new bank or language.
     def __init__(self):
-        # First row is the title row of the sheet. It is 9 (Which is 8 when zero based)
-        self.firstRow = 8
-
-        # Excel Sheet name
-        self.sheetName = "Current Account"
+ 
         self.bankName = "Pepper"
         self.currency = "Shekels"
 
@@ -43,6 +39,8 @@ class TransactionAnalyzer_Pepper(TransactionAnalyzer):
         self.creditValueColumnName = "תמאך"
         self.debitValueColumnName = "האוח"
         self.descriptionColumnName = "ךיאר"
+        # format argument of pandas.to_datetime
+        self.dateFormat = "%d.%m.%Y"
 
         # Transfers to my accounts and investment costs:
         # Purchase of shares
@@ -81,13 +79,16 @@ class TransactionAnalyzer_Pepper(TransactionAnalyzer):
             
             # Combine all pages into one DataFrame
             for page in range(pageCount):
-                df_combined = pd.concat([df_combined,dataframeList[page]],)
-                
-            for col in df_combined.columns:
-                print(col)
-            if df_combined is not None:
-                print(df_combined)
-                return df_combined
+                df_combined = pd.concat([df_combined,dataframeList[page]],ignore_index=True)
+               
+            # Pepper statements are oldest to newest so we must reverse this as the algorithm expects newest first.
+            df_combined = df_combined.sort_index(ascending=False)
+            # Now reset the index column.
+            df_combined.reset_index(drop=True,inplace=True)
+            
+            # For debugging
+            #print(df_combined)
+            return df_combined
         else:
             return None
             
@@ -95,26 +96,20 @@ class TransactionAnalyzer_Pepper(TransactionAnalyzer):
 # Main
 # Check arguments
 if len(sys.argv) != 2:
-    print("Please specify an xlsx file with 12 months of transactions on the command line.")
+    print("Please specify a pdf file with 12 months of transactions on the command line.")
     exit()
 
 # First argument is the Spreadsheet filename. Ignore the rest.
 fileName = sys.argv[1]
 
-analyzer = None
-# Select an analyzer
-
-df = TransactionAnalyzer_Pepper.tryToGetDataFromFile(fileName)
-if df is not None:
-    analyzer = TransactionAnalyzer_Pepper()
-
 # Customize these
 # These are expenses that are paid directly out of your salary and do not go through any bank account or credit card.
 nonBankMonthlyExpenses = [\
-                          ]
+                         ]
 
-# Analyze if we found a suitable analyzer
-if analyzer:
-    analyzer.analyze(df, nonBankMonthlyExpenses)
+df = TransactionAnalyzer_Pepper.tryToGetDataFromFile(fileName)
+if df is not None:
+    TransactionAnalyzer_Pepper().analyze(df, nonBankMonthlyExpenses)
 else:
-    print("The bank could not be identified from the file: {}",fileName)
+    print("The bank could not be identified from the file: ",fileName)
+    

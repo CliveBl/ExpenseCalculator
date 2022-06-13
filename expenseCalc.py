@@ -48,7 +48,7 @@ class TransactionAnalyzer:
                 value = -Decimal(sub(r'[^\d.]', '', row[self.debitValueColumnName]))
             else:
                 value = Decimal(sub(r'[^\d.]', '', row[self.creditValueColumnName]))
-        return value
+        return float(value)
 
     # Manage the configuration file.
     # We ask the user which entries are investment descriptions and store them in a file.
@@ -96,30 +96,30 @@ class TransactionAnalyzer:
 
         # If we have found some expenses that we need to ask the user about.
         if len(askUserSet) != 0:
-                # Ask user if anything here is an investment.
+            # Ask user if anything here is an investment.
             askUserList = list(askUserSet)
             # Until user hits enter without a number or we exhaust the list.
-            index = 1
-            while index and len(askUserList) > 0:
-                    # Display the list with indexes.
+            menuItem = 1
+            while menuItem and len(askUserList) > 0:
+                # Display the list with indexes.
                 for item in askUserList:
                     print(askUserList.index(item) + 1, item)
 
-                print("Choose one item that is and investment, otherwise <enter>:",end = " ")
+                print("Choose one item that is an investment, otherwise <enter>:",end = " ")
                 # Get the users choice.
-                index = input()
+                menuItem = input()
                 # If it was not <enter>
-                if index:
+                if menuItem:
                     # Check that input is a single digit.
-                    if index.isdigit() and len(index) != 0:
-                        index = int(index) - 1
-                        description = askUserList[index]
+                    if menuItem.isdigit() and len(menuItem) != 0:
+                        menuItem = int(menuItem) - 1
+                        description = askUserList[menuItem]
                         # Add it to the investments set
                         self.investmentsSet.add(description)
                         # Do not ask again about this one.
                         askUserList.remove(description)
                         # Ask again
-                        index = 1
+                        menuItem = 1
                     else:
                         print("Enter a menu item or <enter>")
 
@@ -167,12 +167,12 @@ class TransactionAnalyzer:
 
             # Stop on end of data
             if type(description) != str or description == " ":
-                # On the last row record the date. This is the oldest.
-                startDate = lastDate
-                break
+                 break
                 
             # Just in case there is a dirty date value we convert it to datetime.
-            lastDate = pd.to_datetime(row[self.dateColumnName])
+            # Specifying self.dateFormat can fix an erroneos conversion.
+            lastDate = pd.to_datetime(row[self.dateColumnName],format=self.dateFormat)
+            #print(lastDate,"   ",row.name,"  ", row[self.dateColumnName],"   ",index)
 
             # On the first row record the date. This is the latest.
             if index == 0:
@@ -207,6 +207,9 @@ class TransactionAnalyzer:
                     income += value
                     salaryPerMonth[dt.month -  1] += value
 
+        # On the last row record the date. This is the oldest.
+        startDate = lastDate
+                
         monthNames =  ['January', 'February', 'March','April','May','June','July','August','September','October','November','December']
 
         # Console Output
@@ -242,14 +245,14 @@ class TransactionAnalyzer:
             data['Expenses'].append(abs(expensesPerMonth[month] - totalMonthlyExpenses))
             data['Salary'].append(salaryPerMonth[month])
         
-        monthly = pd.DataFrame(data, index=monthNames)
+        monthlydf = pd.DataFrame(data, index=monthNames)
            
         plotTitle = self.bankName +\
                     "- from: " + startDate.strftime("%d/%m/%Y") + " to: " + endDate.strftime("%d/%m/%Y") +\
                     salaryText + "\n" +\
                     expenseText
         
-        ax = monthly.plot.barh(title=plotTitle, stacked=False, grid=True, color = {"Expenses" :"red","Salary":"green"})
+        ax = monthlydf.plot.barh(title=plotTitle, stacked=False, grid=True, color = {"Expenses" :"red","Salary":"green"})
         ax.set_xlabel(self.currency)
         ax.set_ylabel("Month")
 

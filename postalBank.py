@@ -18,11 +18,7 @@ import pandas as pd
 class TransactionAnalyzer_PostalBankHebrew(TransactionAnalyzer):
     # This a bank/language specific subclass. Use it as a template for a new bank or language.
     def __init__(self):
-        # First row is the title row of the sheet. It is 9 (Which is 8 when zero based)
-        self.firstRow = 8
 
-        # Excel Sheet name
-        self.sheetName = "Current Account"
         self.bankName = "Postal Bank"
         self.currency = "Shekels"
 
@@ -32,6 +28,8 @@ class TransactionAnalyzer_PostalBankHebrew(TransactionAnalyzer):
         self.creditValueColumnName = "זכות"
         self.debitValueColumnName = "חובה"
         self.descriptionColumnName = "תאור פעולה"
+        # format argument of pandas.to_datetime
+        self.dateFormat = None
 
         # Transfers to my accounts and investment costs:
         # Purchase of shares
@@ -83,21 +81,15 @@ if len(sys.argv) != 2:
 # First argument is the Spreadsheet filename. Ignore the rest.
 fileName = sys.argv[1]
 
-analyzer = None
-# Select an analyzer
-
-df = TransactionAnalyzer_PostalBankHebrew.tryToGetDataFromFile(fileName)
-if df is not None:
-    analyzer = TransactionAnalyzer_PostalBankHebrew()
-
 # Customize these
 # These are expenses that are paid directly out of your salary and do not go through any bank account or credit card.
 nonBankMonthlyExpenses = [\
                          ]
 
-# Analyze if we found a suitable analyzer
-if analyzer:
-    analyzer.analyze(df, nonBankMonthlyExpenses)
+df = TransactionAnalyzer_PostalBankHebrew.tryToGetDataFromFile(fileName)
+if df is not None:
+    TransactionAnalyzer_PostalBankHebrew().analyze(df, nonBankMonthlyExpenses)
 else:
-    print("The bank could not be identified from the file: {}",fileName)
+    print("The bank could not be identified from the file: ",fileName)
     
+
