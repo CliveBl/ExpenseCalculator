@@ -6,7 +6,7 @@
 # 6. Save the file.
 # Run as follows in Windows Terminal:
 # (You can run it in Windows cmd, but it does not support languages other than English)
-# python postalBank.py Movement.xlsx
+# python bankHapoalim.py excelNewTransactions.xlsx
 
 from expenseCalc import TransactionAnalyzer
 import sys

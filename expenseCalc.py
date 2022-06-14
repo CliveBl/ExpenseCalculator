@@ -32,7 +32,6 @@ import json
 from os.path import exists
 from re import sub
 from decimal import Decimal
-import time
 
 class TransactionAnalyzer:
     # Abstract class. You need to create a subclass for each Bank.
@@ -46,10 +45,10 @@ class TransactionAnalyzer:
         elif self.debitValueColumnName is not None and self.creditValueColumnName is not None:
             # Check if there is a value in debitValueColumnName
             valueStr = row[self.debitValueColumnName]
-            if type(valueStr) == float:
+            if type(valueStr) == float and valueStr != 0.0:
                 value = -valueStr
             else:
-                if len(valueStr) != 0:
+                if type(valueStr) == str and len(valueStr) != 0:
                     value = -Decimal(sub(r'[^\d.]', '', valueStr))
                 else:
                     # Check if there is a value in creditValueColumnName
