@@ -32,6 +32,7 @@ import json
 from os.path import exists
 from re import sub
 from decimal import Decimal
+import time
 
 class TransactionAnalyzer:
     # Abstract class. You need to create a subclass for each Bank.
@@ -118,8 +119,14 @@ class TransactionAnalyzer:
                     print(askUserList.index(item) + 1, item)
 
                 print("Choose one item that is an investment, otherwise <enter>:",end = " ")
-                # Get the users choice.
-                menuItem = input()
+                # If file does not exist.
+                # (A batch file can create this file in order not to wait for input.)
+                if not self.testmode:
+                    # Get the users choice.
+                    menuItem = input()
+                else:
+                    menuItem = None
+                    
                 # If it was <enter>
                 if not menuItem:
                     # Stop asking
@@ -154,10 +161,17 @@ class TransactionAnalyzer:
             f.close()
 
     # Analyze the transaction file.
+    # Function will block unless a file "testmode.tmp" is present.
     # Parameters:
-    # dataframe - A pandas dataframe object containing the data to be analyzed. Assumes that the transactions are from newest to oldest.
+    # dataframe - A pandas dataframe object containing the data to be analyzed. 
+    # Assumptions: The transactions are from newest to oldest.
+    #              There is only a single description column.
     # nonBankMonthlyExpenses - A list of tuples of the form [ expense description, sum ] with an entry for each non-bank expense.
-    def analyze(self, dataframe, nonBankMonthlyExpenses):
+    # plotFileName - The name of a file to output the plot to.
+    def analyze(self, dataframe, nonBankMonthlyExpenses = None, plotFileName = None):
+
+        # Check if we are in test mode by the existence of the file.
+        self.testmode = exists("testmode.tmp")
 
         # Read, create or modify configuration, as needed.
         self.__configure(dataframe)
@@ -173,11 +187,12 @@ class TransactionAnalyzer:
         numberOfMonths = 12
         lastDate = " "
 
-        # Calculate non bank expenses per month
-        for expense in nonBankMonthlyExpenses:
-            totalMonthlyExpenses -= expense[1]
-        # Now for the whole period
-        sum = totalMonthlyExpenses * numberOfMonths
+        if nonBankMonthlyExpenses:
+            # Calculate non bank expenses per month
+            for expense in nonBankMonthlyExpenses:
+                totalMonthlyExpenses -= expense[1]
+            # Now for the whole period
+            sum = totalMonthlyExpenses * numberOfMonths
 
         # Iterate over all transactions
         for index, row in dataframe.iterrows():
@@ -276,8 +291,19 @@ class TransactionAnalyzer:
         # Label the axis.
         ax.set_xlabel(self.currency)
         ax.set_ylabel("Month")
-        # Display it.
-        plt.show()
+        
+        # Create plot file name if none is given.
+        if not plotFileName:
+            plotFileName = type(self).__name__ + ".png"
+            
+        plt.savefig(fname = plotFileName)
+        print("Plot saved to: ",plotFileName)
+        
+        # If file does not exist.
+        # (A batch file can create this file in order not to stop and display the plot.)
+        if not self.testmode:
+            # Display it.
+            plt.show()
 
 
 
