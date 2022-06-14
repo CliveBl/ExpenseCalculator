@@ -3,7 +3,6 @@
 ############################################################
 # Generate an Excel file of your transactions as follows:
 # 1. Login to Bank in a browser
-# 2. Set to English (Hebrew can be supported by adjusted the script)
 # 3. Go to your Current Account transactions.
 # 4. Select 12 months of transactions using the menu.
 # 5. Select Export to Excel using the Export menu.
@@ -38,6 +37,7 @@ class TransactionAnalyzer_Pepper(TransactionAnalyzer):
         self.creditDebitValueColumnName = None
         self.creditValueColumnName = "תמאך"
         self.debitValueColumnName = "האוח"
+        # There can only be a single description column, so if there are more in the data they must be combined.
         self.descriptionColumnName = "ךיאר"
         # format argument of pandas.to_datetime
         self.dateFormat = "%d.%m.%Y"
@@ -65,7 +65,8 @@ class TransactionAnalyzer_Pepper(TransactionAnalyzer):
         self.extraordinaryExpenseFloor = 10000
 
 
-    def tryToGetDataFromFile(fileName):
+    # Return a DatFrame or None if the file could not be identified for this class.
+    def getDataFrame(fileName):
         # Try to identify the bank/language according to the name of the file.
         # If not, we could look inside the file.
         if re.search("Monthly account statement.*\.pdf",fileName):
@@ -107,7 +108,7 @@ fileName = sys.argv[1]
 nonBankMonthlyExpenses = [\
                          ]
 
-df = TransactionAnalyzer_Pepper.tryToGetDataFromFile(fileName)
+df = TransactionAnalyzer_Pepper.getDataFrame(fileName)
 if df is not None:
     TransactionAnalyzer_Pepper().analyze(df, nonBankMonthlyExpenses)
 else:

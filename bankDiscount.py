@@ -26,6 +26,7 @@ class TransactionAnalyzer_BankDiscountEnglish(TransactionAnalyzer):
         self.creditDebitValueColumnName = "₪ Credit/debit "
         self.debitValueColumnName = None
         self.creditValueColumnName = None
+        # There can only be a single description column, so if there are more in the data they must be combined.
         self.descriptionColumnName = "Description"
         # format argument of pandas.to_datetime
         self.dateFormat = None
@@ -62,7 +63,8 @@ class TransactionAnalyzer_BankDiscountEnglish(TransactionAnalyzer):
         # We show results that both exclude and include extraordinary expenses.
         self.extraordinaryExpenseFloor = 10000
 
-    def tryToGetDataFromFile(fileName):
+    # Return a DatFrame or None if the file could not be identified for this class.
+    def getDataFrame(fileName):
         # Try to identify the bank/language according to the name of the file.
         # If not, we could look inside the file.
         if re.search("Current Account.*_....\.xlsx",fileName):
@@ -97,7 +99,7 @@ nonBankMonthlyExpenses = [\
                           ["Company medical insurance",0]\
                          ]
 
-df = TransactionAnalyzer_BankDiscountEnglish.tryToGetDataFromFile(fileName)
+df = TransactionAnalyzer_BankDiscountEnglish.getDataFrame(fileName)
 if df is not None:
     TransactionAnalyzer_BankDiscountEnglish().analyze(df, nonBankMonthlyExpenses)
 else:

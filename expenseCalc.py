@@ -16,7 +16,7 @@
 # Use TransactionAnalyzer_BankDiscountEnglish as a template.
 #
 
-# You may need to make the following installs
+# You may need to make the following installs:
 # python.exe -m pip install --upgrade pip
 # pip install pandas
 # pip install openpyxl
@@ -36,18 +36,30 @@ from decimal import Decimal
 class TransactionAnalyzer:
     # Abstract class. You need to create a subclass for each Bank.
 
-    # Return the transaction value from the row.
-    # Value may be positive(credit or negative(debit)
+    # Return the transaction value from the row as a float.
+    # Value may be positive(credit) or negative(debit)
     def __extractValue(self, row):
         # There may be a unified credit/debit column or seperate cred and debit columns.
         if self.creditDebitValueColumnName is not None:
             value = row[self.creditDebitValueColumnName]
-        else:
+        elif self.debitValueColumnName is not None and self.creditValueColumnName is not None:
+            # Check if there is a value in debitValueColumnName
             valueStr = row[self.debitValueColumnName]
-            if len(valueStr) != 0:
-                value = -Decimal(sub(r'[^\d.]', '', row[self.debitValueColumnName]))
+            if type(valueStr) == float:
+                value = -valueStr
             else:
-                value = Decimal(sub(r'[^\d.]', '', row[self.creditValueColumnName]))
+                if len(valueStr) != 0:
+                    value = -Decimal(sub(r'[^\d.]', '', valueStr))
+                else:
+                    # Check if there is a value in creditValueColumnName
+                    valueStr = row[self.creditValueColumnName]
+                    if type(valueStr) == float:
+                        value = valueStr
+                    else:
+                        value = Decimal(sub(r'[^\d.]', '', valueStr))
+        else:
+            print("Either self.creditDebitValueColumnName or self.debitValueColumnName and self.creditValueColumnName must not be None")
+            
         return float(value)
 
     # Manage the configuration file.
@@ -68,10 +80,10 @@ class TransactionAnalyzer:
         else:
             self.expensesSet = set()
             self.investmentsSet = set()
-
+        
+        # Create an empty set.
         askUserSet = set()
-
-            # Iterate over all transactions.
+        # Iterate over all transactions in order to gather expense types that we do not know about.
         for index, row in dataframe.iterrows():
             description = row[self.descriptionColumnName]
 
@@ -96,7 +108,7 @@ class TransactionAnalyzer:
 
         # If we have found some expenses that we need to ask the user about.
         if len(askUserSet) != 0:
-            # Ask user if anything here is an investment.
+            # Ask the user if anything here is an investment.
             askUserList = list(askUserSet)
             # Until user hits enter without a number or we exhaust the list.
             menuItem = 1
@@ -108,11 +120,16 @@ class TransactionAnalyzer:
                 print("Choose one item that is an investment, otherwise <enter>:",end = " ")
                 # Get the users choice.
                 menuItem = input()
-                # If it was not <enter>
-                if menuItem:
-                    # Check that input is a single digit.
-                    if menuItem.isdigit() and len(menuItem) != 0:
-                        menuItem = int(menuItem) - 1
+                # If it was <enter>
+                if not menuItem:
+                    # Stop asking
+                    break
+                    
+                # Check that input is a single digit.
+                if menuItem.isdigit() and len(menuItem) != 0:
+                    menuItem = int(menuItem) - 1
+                    # Check range
+                    if 0 <= menuItem  <= len(askUserList):
                         description = askUserList[menuItem]
                         # Add it to the investments set
                         self.investmentsSet.add(description)
@@ -120,8 +137,9 @@ class TransactionAnalyzer:
                         askUserList.remove(description)
                         # Ask again
                         menuItem = 1
-                    else:
-                        print("Enter a menu item or <enter>")
+                        continue
+                # Incorrect input
+                print("Enter a menu item or <enter>")
 
             # Transfer what is left to expensesSet. We will save this so that we will never ask again.
             for expense in askUserList:
@@ -130,14 +148,14 @@ class TransactionAnalyzer:
             # Prepare a dictionary to save in the json file.
             configurationDict = dict({"expenses" : list(self.expensesSet), "investments" : list(self.investmentsSet)})
 
-            print("Saving configuration file.")
+            print("Saving configuration file to ",configFileName)
             f = open(configFileName, "w")
             json.dump(configurationDict, f)
             f.close()
 
     # Analyze the transaction file.
     # Parameters:
-    # dataframe - A pandas dataframe object containing the data to be analyzed.
+    # dataframe - A pandas dataframe object containing the data to be analyzed. Assumes that the transactions are from newest to oldest.
     # nonBankMonthlyExpenses - A list of tuples of the form [ expense description, sum ] with an entry for each non-bank expense.
     def analyze(self, dataframe, nonBankMonthlyExpenses):
 
@@ -167,7 +185,8 @@ class TransactionAnalyzer:
 
             # Stop on end of data
             if type(description) != str or description == " ":
-                 break
+                # Break out of for.
+                break
                 
             # Just in case there is a dirty date value we convert it to datetime.
             # Specifying self.dateFormat can fix an erroneos conversion.
@@ -207,7 +226,7 @@ class TransactionAnalyzer:
                     income += value
                     salaryPerMonth[dt.month -  1] += value
 
-        # On the last row record the date. This is the oldest.
+        # On the last row, record the date. This is the oldest.
         startDate = lastDate
                 
         monthNames =  ['January', 'February', 'March','April','May','June','July','August','September','October','November','December']
@@ -244,18 +263,20 @@ class TransactionAnalyzer:
         for month in range(0,numberOfMonths):
             data['Expenses'].append(abs(expensesPerMonth[month] - totalMonthlyExpenses))
             data['Salary'].append(salaryPerMonth[month])
-        
+            
         monthlydf = pd.DataFrame(data, index=monthNames)
-           
+        
+        # Create a title with a summary of all the information gathered.
         plotTitle = self.bankName +\
                     "- from: " + startDate.strftime("%d/%m/%Y") + " to: " + endDate.strftime("%d/%m/%Y") +\
                     salaryText + "\n" +\
                     expenseText
-        
+        # Create the chart.
         ax = monthlydf.plot.barh(title=plotTitle, stacked=False, grid=True, color = {"Expenses" :"red","Salary":"green"})
+        # Label the axis.
         ax.set_xlabel(self.currency)
         ax.set_ylabel("Month")
-
+        # Display it.
         plt.show()
 
 

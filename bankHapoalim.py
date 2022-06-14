@@ -1,6 +1,5 @@
 # Generate an Excel file of your transactions as follows:
 # 1. Login to Bank in a browser
-# 2. Set to English (Hebrew can be supported by adjusted the script)
 # 3. Go to your Current Account transactions.
 # 4. Select 12 months of transactions using the menu.
 # 5. Select Export to Excel using the Export menu.
@@ -15,19 +14,20 @@ import re
 import pandas as pd
 
 
-class TransactionAnalyzer_PostalBankHebrew(TransactionAnalyzer):
+class TransactionAnalyzer_BankHapoalim(TransactionAnalyzer):
     # This a bank/language specific subclass. Use it as a template for a new bank or language.
     def __init__(self):
 
-        self.bankName = "Postal Bank"
+        self.bankName = "Bank Hapoalim"
         self.currency = "Shekels"
 
         # Excel column names
-        self.dateColumnName = "תאריך תמצית"
+        self.dateColumnName = "תאריך ערך"
         self.creditDebitValueColumnName = None
         self.creditValueColumnName = "זכות"
         self.debitValueColumnName = "חובה"
-        self.descriptionColumnName = "תאור פעולה"
+        # There can only be a single description column, so if there are more in the data they must be combined.
+        self.descriptionColumnName = "הפעולה"
         # format argument of pandas.to_datetime
         self.dateFormat = None
 
@@ -40,7 +40,7 @@ class TransactionAnalyzer_PostalBankHebrew(TransactionAnalyzer):
         # Tax on savings
         # Tax on savings
         # Tax on savings
-        self.excludeRegex = "DummyRegex"
+        self.excludeRegex = "הפקדה לפקדון"
 
         # Expenses that were returned to me via BIT(like Venmo). We assume that anything coming from BIT is the return of an expense.
         # It could also be other things like the sale of a personal item, however that can also be considered a negative expense.
@@ -58,17 +58,21 @@ class TransactionAnalyzer_PostalBankHebrew(TransactionAnalyzer):
     def getDataFrame(fileName):
         # Try to identify the bank/language according to the name of the file.
         # If not, we could look inside the file.
-        if re.search("Movement.*\.xlsx",fileName):
+        if re.search("excelNewTransactions.xlsx",fileName):
             # Load spreadsheet
             xl = pd.ExcelFile(fileName)
 
             #print(xl.sheet_names)
 
             # First row is the title row of the sheet. It is 1 (Which is 0 when zero based)
-            firstRow = 0
+            firstRow = 5
             # Load a sheet into a DataFrame by name: df1.
-            dataframe = xl.parse("Movement", header=firstRow)
-            
+            dataframe = xl.parse("גיליון1", header=firstRow)
+                
+            # Combine the description columns to a single column.
+            dataframe["פרטים"] = dataframe["פרטים"].fillna("")
+            dataframe["הפעולה"] = dataframe["הפעולה"].astype(str) + " " + dataframe["פרטים"].astype(str)
+
             return dataframe
         else:
             return None
@@ -87,9 +91,9 @@ fileName = sys.argv[1]
 nonBankMonthlyExpenses = [\
                          ]
 
-df = TransactionAnalyzer_PostalBankHebrew.getDataFrame(fileName)
+df = TransactionAnalyzer_BankHapoalim.getDataFrame(fileName)
 if df is not None:
-    TransactionAnalyzer_PostalBankHebrew().analyze(df, nonBankMonthlyExpenses)
+    TransactionAnalyzer_BankHapoalim().analyze(df, nonBankMonthlyExpenses)
 else:
     print("The bank could not be identified from the file: ",fileName)
     
