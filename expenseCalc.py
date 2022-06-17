@@ -226,9 +226,9 @@ class TransactionAnalyzer:
                     extraordinary += value
                     print("Extraordinary expense: ",lastDate," ",description," ",value)
                 else:
-                    # Accumulate the monthly value.
+                    # Accumulate the monthly expenses.
                     expensesPerMonth[dt.month -  1] -= value
-                # Accumulate the total value
+                # Accumulate the total expenses
                 sum += value
             else:  # Value > 0
                 if re.search(self.includeRegex,description) != None:
@@ -247,6 +247,9 @@ class TransactionAnalyzer:
 
         titleText = self.bankName + " from: " + startDate.strftime("%d/%m/%Y") + " to: " + endDate.strftime("%d/%m/%Y")
 
+        # Formatting function for currency values.
+        currency = lambda value: "{:,.2f}".format(value)
+        
         # Console Output
         print("")
         print(titleText)
@@ -255,7 +258,7 @@ class TransactionAnalyzer:
         print("             Expense Summary")
         print("             ---------------")
         print("Including extraordinary expenses:")
-        toatlExpenseText = "Total expenses = {:.2f} Monthly= {:.2f}".format(abs(sum),abs(sum)/numberOfMonths)
+        toatlExpenseText = "Total expenses = {} Monthly= {}".format(currency(abs(sum)),currency(abs(sum)/numberOfMonths))
         print(toatlExpenseText)
         print("")
 
@@ -265,7 +268,7 @@ class TransactionAnalyzer:
 
         print("Excluding extraordinary expenses:")
         #print("Total expenses = %d Monthly= %d"%averageMonthly)
-        expenseText = "Total expenses = {:.2f} Monthly= {:.2f}".format(abs(sum),averageMonthly)
+        expenseText = "Total expenses = {} Monthly= {}".format(currency(abs(sum)),currency(averageMonthly))
         print(expenseText)
         print("")
 
@@ -274,28 +277,28 @@ class TransactionAnalyzer:
         # so one of the months may be partly from this year and partly from last year.
         print("             Monthly Summary")
         print("             ---------------")
-        print("  Month      Expenses   Income   Profit/Loss")
+        print("      Month      Expenses      Income      Profit/Loss")
         profit = 0
         for month in range(0,numberOfMonths):
             # Expenses include totalMonthlyNonBankExpenses, but they are not used in Profit/Loss calculation
             # because they are already part of the salary.
             print("%10s"%datetime.date(1900, month + 1, 1).strftime('%B'),\
-            "  - %6d"% abs(expensesPerMonth[month] - totalMonthlyNonBankExpenses),\
-            "   %d"%salaryPerMonth[month],\
-            "   %d"%(salaryPerMonth[month] - abs(expensesPerMonth[month]))\
+            "  - {:>10}".format(currency(abs(expensesPerMonth[month] - totalMonthlyNonBankExpenses))),\
+            "   {:>10}".format(currency(salaryPerMonth[month])),\
+            "   {:>10}".format(currency(salaryPerMonth[month] - abs(expensesPerMonth[month])))\
             )
             profit += salaryPerMonth[month] - abs(expensesPerMonth[month])
 
-        print("==============================================")
-        print("Total          %d"%abs(sum),"   %d"%income,"  %d"%profit)
-        print("==============================================")
+        print("=====================================================")
+        print("Total          {:>10}".format(currency(abs(sum))),"   {:>10}".format(currency(income)),"   {:>10}".format(currency(profit)))
+        print("=====================================================")
         print("")
             
         # Income
         print("             Income Summary")
         print("             ---------------")
         monthlySalary = income/numberOfMonths
-        salaryText = "Total income = {:.2f} Monthly = {:.2f}".format(abs(income),monthlySalary)
+        salaryText = "Total income = {} Monthly = {}".format(currency(abs(income)),currency(monthlySalary))
         print(salaryText)
         print("")
 
