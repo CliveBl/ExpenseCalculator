@@ -177,7 +177,7 @@ class TransactionAnalyzer:
 
         # Initial values
         sum = 0
-        totalMonthlyExpenses = 0
+        totalMonthlyNonBankExpenses = 0
         extraordinary = 0
         income = 0
         expensesPerMonth = [0,0,0,0,0,0,0,0,0,0,0,0]
@@ -189,9 +189,9 @@ class TransactionAnalyzer:
         if nonBankMonthlyExpenses:
             # Calculate non bank expenses per month
             for expense in nonBankMonthlyExpenses:
-                totalMonthlyExpenses -= expense[1]
+                totalMonthlyNonBankExpenses -= expense[1]
             # Now for the whole period
-            sum = totalMonthlyExpenses * numberOfMonths
+            sum = totalMonthlyNonBankExpenses * numberOfMonths
 
         # Iterate over all transactions
         for index, row in dataframe.iterrows():
@@ -269,15 +269,18 @@ class TransactionAnalyzer:
         print(expenseText)
         print("")
 
-        # Print monthly values. Not very accurate because we may start in the middle of a month,
-        # so part of the month maybe from previous year.
+        # Print monthly values. 
+        # Note that our data may start in the middle of a month,
+        # so one of the months may be partly from this year and partly from last year.
         print("             Monthly Summary")
         print("             ---------------")
-        print("  Month      Expenses   Salary   Profit/Loss")
+        print("  Month      Expenses   Income   Profit/Loss")
         profit = 0
         for month in range(0,numberOfMonths):
+            # Expenses include totalMonthlyNonBankExpenses, but they are not used in Profit/Loss calculation
+            # because they are already part of the salary.
             print("%10s"%datetime.date(1900, month + 1, 1).strftime('%B'),\
-            "  - %6d"% abs(expensesPerMonth[month] - totalMonthlyExpenses),\
+            "  - %6d"% abs(expensesPerMonth[month] - totalMonthlyNonBankExpenses),\
             "   %d"%salaryPerMonth[month],\
             "   %d"%(salaryPerMonth[month] - abs(expensesPerMonth[month]))\
             )
@@ -289,10 +292,10 @@ class TransactionAnalyzer:
         print("")
             
         # Income
-        print("             Salary Summary")
+        print("             Income Summary")
         print("             ---------------")
         monthlySalary = income/numberOfMonths
-        salaryText = "Total salary = {:.2f} Monthly = {:.2f}".format(abs(income),monthlySalary)
+        salaryText = "Total income = {:.2f} Monthly = {:.2f}".format(abs(income),monthlySalary)
         print(salaryText)
         print("")
 
@@ -303,7 +306,7 @@ class TransactionAnalyzer:
             'Salary':[]
         }
         for month in range(0,numberOfMonths):
-            data['Expenses'].append(abs(expensesPerMonth[month] - totalMonthlyExpenses))
+            data['Expenses'].append(abs(expensesPerMonth[month] - totalMonthlyNonBankExpenses))
             data['Salary'].append(salaryPerMonth[month])
             
         monthlydf = pd.DataFrame(data, index=monthNames)
