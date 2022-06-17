@@ -243,30 +243,58 @@ class TransactionAnalyzer:
         # On the last row, record the date. This is the oldest.
         startDate = lastDate
                 
-        monthNames =  ['January', 'February', 'March','April','May','June','July','August','September','October','November','December']
+        monthNames =  'January', 'February', 'March','April','May','June','July','August','September','October','November','December'
+
+        titleText = self.bankName + " from: " + startDate.strftime("%d/%m/%Y") + " to: " + endDate.strftime("%d/%m/%Y")
 
         # Console Output
+        print("")
+        print(titleText)
+        print("-------------------------------------------------")
+        print("")
+        print("             Expense Summary")
+        print("             ---------------")
+        print("Including extraordinary expenses:")
         toatlExpenseText = "Total expenses = {:.2f} Monthly= {:.2f}".format(abs(sum),abs(sum)/numberOfMonths)
         print(toatlExpenseText)
+        print("")
 
         # Print again excluding extraordinary expenses.
         sum = sum - extraordinary
         averageMonthly = abs(sum)/numberOfMonths
 
-        print("\nExcluding extraordinary expenses:")
+        print("Excluding extraordinary expenses:")
         #print("Total expenses = %d Monthly= %d"%averageMonthly)
         expenseText = "Total expenses = {:.2f} Monthly= {:.2f}".format(abs(sum),averageMonthly)
         print(expenseText)
+        print("")
 
         # Print monthly values. Not very accurate because we may start in the middle of a month,
         # so part of the month maybe from previous year.
-        print("\n  Month      Expenses   Salary")
+        print("             Monthly Summary")
+        print("             ---------------")
+        print("  Month      Expenses   Salary   Profit/Loss")
+        profit = 0
         for month in range(0,numberOfMonths):
-            print("%10s"%datetime.date(1900, month + 1, 1).strftime('%B'),"  - %6d"% abs(expensesPerMonth[month] - totalMonthlyExpenses),"   %d"%salaryPerMonth[month])
+            print("%10s"%datetime.date(1900, month + 1, 1).strftime('%B'),\
+            "  - %6d"% abs(expensesPerMonth[month] - totalMonthlyExpenses),\
+            "   %d"%salaryPerMonth[month],\
+            "   %d"%(salaryPerMonth[month] - abs(expensesPerMonth[month]))\
+            )
+            profit += salaryPerMonth[month] - abs(expensesPerMonth[month])
+
+        print("==============================================")
+        print("Total          %d"%abs(sum),"   %d"%income,"  %d"%profit)
+        print("==============================================")
+        print("")
+            
         # Income
+        print("             Salary Summary")
+        print("             ---------------")
         monthlySalary = income/numberOfMonths
-        salaryText = "\nTotal salary = {:.2f} Monthly = {:.2f}".format(abs(income),monthlySalary)
+        salaryText = "Total salary = {:.2f} Monthly = {:.2f}".format(abs(income),monthlySalary)
         print(salaryText)
+        print("")
 
         # Bar chart output.
         # Put all the information on a bar chart
@@ -281,8 +309,7 @@ class TransactionAnalyzer:
         monthlydf = pd.DataFrame(data, index=monthNames)
         
         # Create a title with a summary of all the information gathered.
-        plotTitle = self.bankName +\
-                    "- from: " + startDate.strftime("%d/%m/%Y") + " to: " + endDate.strftime("%d/%m/%Y") +\
+        plotTitle = titleText  + "\n" +\
                     salaryText + "\n" +\
                     expenseText
         # Create the chart.
@@ -297,6 +324,8 @@ class TransactionAnalyzer:
             
         plt.savefig(fname = plotFileName)
         print("Plot saved to: ",plotFileName)
+        print("")
+        
         
         # If file does not exist.
         # (A batch file can create this file in order not to stop and display the plot.)
