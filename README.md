@@ -23,6 +23,10 @@ Libraries that may need installing:
 
 \# python.exe -m pip install --upgrade pip
 
+\# python.exe -m pip install -r requirements.txt
+
+or
+
 \# pip install pandas
 
 \# pip install openpyxl
@@ -33,5 +37,8 @@ For pdf statements only:
 
 \# pip install tabula-py
 
-\# Also install Java from https://www.java.com/download/ie_manual.jsp
+Also install Java from 
+Windows: https://www.java.com/download/ie_manual.jsp
+Linux: sudo apt install default-jre
+
 

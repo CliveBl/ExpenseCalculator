@@ -28,6 +28,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import re
 import datetime
+from datetime import date
+#from datetime import time
+import time
 import json
 from os.path import exists
 from re import sub
@@ -77,9 +80,21 @@ class TransactionAnalyzer:
             f.close()
             self.expensesSet = set(configurationDict["expenses"])
             self.investmentsSet = set(configurationDict["investments"])
+            self.dateOfBirth = configurationDict["dateOfBirth"]
         else:
             self.expensesSet = set()
             self.investmentsSet = set()
+            self.dateOfBirth = ""
+            
+        # Get date of birth
+        if len(self.dateOfBirth) == 0:
+            self.dateOfBirth = input("Enter your date of birth so that we can make FIRE calculations (dd/mm/yyyy): ")
+            try:
+                # Check for valid input.
+                valid_date = time.strptime(self.dateOfBirth, '%d/%m/%Y')
+            except ValueError:
+                print("Invalid date. Remove {} to try again.".format(configFileName))
+                self.dateOfBirth = ""
         
         # Create an empty set.
         askUserSet = set()
@@ -152,7 +167,10 @@ class TransactionAnalyzer:
                 self.expensesSet.add(expense)
 
             # Prepare a dictionary to save in the json file.
-            configurationDict = dict({"expenses" : list(self.expensesSet), "investments" : list(self.investmentsSet)})
+            configurationDict = dict({"expenses" : list(self.expensesSet),
+                                      "investments" : list(self.investmentsSet),
+                                      "dateOfBirth" : self.dateOfBirth
+                                      })
 
             print("Saving configuration file to ",configFileName)
             f = open(configFileName, "w")
@@ -250,6 +268,8 @@ class TransactionAnalyzer:
         # Formatting function for currency values.
         currency = lambda value: "{:,.2f}".format(value)
         
+        series = lambda sum, inflation, years: abs(sum)*(1-inflation**(years+1))/(1 - inflation)
+        
         # Console Output
         print("")
         print(titleText)
@@ -300,6 +320,29 @@ class TransactionAnalyzer:
         monthlySalary = income/numberOfMonths
         salaryText = "Total income = {} Monthly = {}".format(currency(abs(income)),currency(monthlySalary))
         print(salaryText)
+        print("")
+
+        # Income
+        print("             F.I.R.E Summary")
+        print("             ---------------")
+        
+        # Calculate age from date of birth
+        if len(self.dateOfBirth) != 0:
+            age = date.today().year - time.strptime(self.dateOfBirth, '%d/%m/%Y').tm_year
+        else:
+            age = 60
+            
+        inflation = 4.0
+        years = 0
+        print("Assumed inflation: {}  Current age: {}".format(inflation, age))
+        print("Pension Age     Savings Required    Required Net Pension")
+        print("                (Until pension)         (After tax)")
+        for age in range(age,71):
+            print(age,\
+                  "   {:>20}".format(currency(series(sum,1 + inflation/100, years))),\
+                  "   {:>20}".format(currency(abs(sum)*(1+ inflation/100)**years/12))\
+                  )
+            years += 1
         print("")
 
         # Bar chart output.
