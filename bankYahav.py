@@ -12,6 +12,8 @@ from expenseCalc import TransactionAnalyzer
 import sys
 import re
 import pandas as pd
+import os
+import webbrowser
 
 
 class TransactionAnalyzer_BankYahav(TransactionAnalyzer):
@@ -57,7 +59,7 @@ class TransactionAnalyzer_BankYahav(TransactionAnalyzer):
     def getDataFrame(fileName):
         # Try to identify the bank/language according to the name of the file.
         # If not, we could look inside the file.
-        if re.search("תנועות בחשבון עו״ש.*\.xlsx",fileName):
+        if re.search("תנועות בחשבון עו״ש.*\.xls",fileName):
             # Load spreadsheet
             xl = pd.ExcelFile(fileName)
 
@@ -91,7 +93,13 @@ nonBankMonthlyExpenses = [\
 
 df = TransactionAnalyzer_BankYahav.getDataFrame(fileName)
 if df is not None:
-    TransactionAnalyzer_BankYahav().analyze(df, nonBankMonthlyExpenses)
+    t = TransactionAnalyzer_BankYahav()
+    t.analyze(df, nonBankMonthlyExpenses)
+    t.renderConsole()
+    htmlFile = os.path.splitext(fileName)[0] + ".html"
+    t.renderHTML(htmlFile)
+    #webbrowser.open(os.path.join('file://', htmlFile))
+
 else:
     print("The bank could not be identified from the file: ",fileName)
     

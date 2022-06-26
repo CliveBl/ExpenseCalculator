@@ -23,6 +23,8 @@ import sys
 import re
 import tabula
 import pandas as pd
+import os
+import webbrowser
 
 class TransactionAnalyzer_Pepper(TransactionAnalyzer):
     # This a bank/language specific subclass. Use it as a template for a new bank or language.
@@ -110,7 +112,13 @@ nonBankMonthlyExpenses = [\
 
 df = TransactionAnalyzer_Pepper.getDataFrame(fileName)
 if df is not None:
-    TransactionAnalyzer_Pepper().analyze(df, nonBankMonthlyExpenses)
+    t = TransactionAnalyzer_Pepper()
+    t.analyze(df, nonBankMonthlyExpenses)
+    t.renderConsole()
+    htmlFile = os.path.splitext(fileName)[0] + ".html"
+    t.renderHTML(htmlFile)
+    #webbrowser.open(os.path.join('file://', htmlFile))
+
 else:
     print("The bank could not be identified from the file: ",fileName)
     

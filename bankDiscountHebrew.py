@@ -12,12 +12,14 @@ from expenseCalc import TransactionAnalyzer
 import sys
 import re
 import pandas as pd
+import os
+import webbrowser
 
 class TransactionAnalyzer_BankDiscountHebrew(TransactionAnalyzer):
     # This a bank/language specific subclass. Use it as a template for a new bank or language.
     def __init__(self):
  
-        self.bankName = "Bank DIscount"
+        self.bankName = "Bank Discount"
         self.currency = "Shekels"
 
         # Excel column names
@@ -104,7 +106,12 @@ nonBankMonthlyExpenses = [\
 
 df = TransactionAnalyzer_BankDiscountHebrew.getDataFrame(fileName)
 if df is not None:
-    TransactionAnalyzer_BankDiscountHebrew().analyze(df, nonBankMonthlyExpenses)
+    t = TransactionAnalyzer_BankDiscountHebrew()
+    t.analyze(df, nonBankMonthlyExpenses)
+    t.renderConsole()
+    htmlFile = os.path.splitext(fileName)[0] + ".html"
+    t.renderHTML(htmlFile)
+    #webbrowser.open(os.path.join('file://', htmlFile))
 else:
     print("The bank could not be identified from the file: ",fileName)
 
