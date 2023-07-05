@@ -19,7 +19,7 @@ class TransactionAnalyzer_BankDiscountHebrew(TransactionAnalyzer):
     # This a bank/language specific subclass. Use it as a template for a new bank or language.
     def __init__(self):
  
-        self.bankName = "Bank Discount"
+        self.bankName = "Bank Discount (Hebrew)"
         self.currency = "Shekels"
 
         # Excel column names
@@ -32,7 +32,7 @@ class TransactionAnalyzer_BankDiscountHebrew(TransactionAnalyzer):
         # format argument of pandas.to_datetime
         self.dateFormat = None
 
-        # Transfers to my accounts and investment costs:
+        # Transfers to my accounts and investment costs are not considered income or expenses:
         # Purchase of shares
         # Savings account
         # Savings account
@@ -45,7 +45,7 @@ class TransactionAnalyzer_BankDiscountHebrew(TransactionAnalyzer):
                             "מכירת ניע.*" + "|" + \
                             "קניית ני.*" + "|" + \
                             "הפקדה לפיקדון נזיל יומי+" + "|" + \
-                            "הפקדה לפיקדון פקדון נזיל יומי" + "|" +\
+                            "הפקדה לפיקדון .*" + "|" +\
                             "משיכה מפיקדון נזיל חודשי" + "|" + \
                             "הפקדה לפיקדון נזיל חודשי" +"|" + \
                             "תשלום מס על רווח מפיקדון" + "|" + \
@@ -66,7 +66,8 @@ class TransactionAnalyzer_BankDiscountHebrew(TransactionAnalyzer):
         
         # Anything equal to and above this is an extraordinary expense.
         # We show results that both exclude and include extraordinary expenses.
-        self.extraordinaryExpenseFloor = 10000
+        # Extraordinary expenses do not appear in the monthly summary.
+        self.extraordinaryExpenseFloor = 30000
 
     # Return a DatFrame or None if the file could not be identified for this class.
     def getDataFrame(fileName):
@@ -80,8 +81,14 @@ class TransactionAnalyzer_BankDiscountHebrew(TransactionAnalyzer):
 
             # First row is the title row of the sheet. It is 9 (Which is 8 when zero based)
             firstRow = 8
-            # Load a sheet into a DataFrame by name: df1. First row is 9 (Which is 8 when zero based)
+            # Load a sheet into a DataFrame by name. First row is 9 (Which is 8 when zero based)
             dataframe = xl.parse("עובר ושב", header=firstRow)
+            # Newer sheets titles are at row 8 (Which is 7 when zero based), so we check the first column name.
+            if dataframe.columns[0] != "תאריך":
+                firstRow = 7
+                # Reload the sheet into a DataFrame by name.
+                dataframe = xl.parse("עובר ושב", header=firstRow)
+
             return dataframe
         else:
             return None
@@ -90,11 +97,13 @@ class TransactionAnalyzer_BankDiscountHebrew(TransactionAnalyzer):
 # Main
 # Check arguments
 if len(sys.argv) != 2:
+    print("file: ", sys.argv[1])
     print("Please specify an xlsx file with 12 months of transactions on the command line.")
     exit()
 
 # First argument is the Spreadsheet filename. Ignore the rest.
 fileName = sys.argv[1]
+#print("file: ",fileName)
 
 # Customize these
 # These are expenses that are paid directly out of your salary and do not go through any bank account or credit card.
@@ -114,8 +123,3 @@ if df is not None:
     #webbrowser.open(os.path.join('file://', htmlFile))
 else:
     print("The bank could not be identified from the file: ",fileName)
-
-
-
-    
-	

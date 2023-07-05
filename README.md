@@ -33,6 +33,8 @@ or
 
 \# pip install matplotlib
 
+\# pip install parse
+
 For pdf statements only:
 
 \# pip install tabula-py
