@@ -38,15 +38,18 @@ from parse import parse
 import shutil
 import os
 
+
 class TransactionAnalyzer:
     # Abstract class. You need to create a subclass for each Bank.
 
-    # Render MD format to console.
+    def __init__(self):
+        self.outputList = None
+
     def renderConsole(self):
         if not hasattr(self, "outputList"):
             print("Please call analyze() first")
             return
-            
+
         # Render MD format to console.
         widthFormat = "{:^50}"
         # Iterate over all output items.
@@ -55,15 +58,15 @@ class TransactionAnalyzer:
                 # level 2 header
                 print("")
                 print(widthFormat.format(item[2:]))
-                print(widthFormat.format(len(item[2:])*"-"))
+                print(widthFormat.format(len(item[2:]) * "-"))
             elif item[:1] == "#":
                 # Level 1 header
                 print("")
                 print(widthFormat.format(item[1:]))
-                print(widthFormat.format(len(item[1:])*"-"))
+                print(widthFormat.format(len(item[1:]) * "-"))
             elif item[:2] == "![":
                 # Image
-                image = parse("![Plot saved to:]({imageFileName})",item)
+                image = parse("![Plot saved to:]({imageFileName})", item)
                 print("")
                 # If we are not in test mode.
                 if not self.testmode:
@@ -76,20 +79,19 @@ class TransactionAnalyzer:
                     item = item.replace("**", "", 1)
                     item = item.replace("**", "", 1)
                 print(item)
-                 
+
         # Show the chart at the end so that all the console text is shown first.
         # (A batch file can create this file in order not to stop and display the plot.)
         if not self.testmode:
             # Display it.
             plt.show()
-                
-                
+
     # Render MD format to HTML.
     def renderHTML(self, htmlFileName):
-    
+
         def openParagraph():
-           nonlocal paragraphOpen
-           if not paragraphOpen:
+            nonlocal paragraphOpen
+            if not paragraphOpen:
                 # Open paragraph
                 html.write("<p>")
                 paragraphOpen = True
@@ -104,14 +106,14 @@ class TransactionAnalyzer:
         if not hasattr(self, "outputList"):
             print("Please call analyze() first")
             return
-         
-        print("Summary in: ",htmlFileName)
-        
-        html = open(htmlFileName, "w",encoding = "utf-8")
+
+        print("Summary in: ", htmlFileName)
+
+        html = open(htmlFileName, "w", encoding="utf-8")
         # Write the file header.
         html.write("<!DOCTYPE html>\n<html><head><meta charset=\"UTF-8\"><style>  p{ font-family: 'Courier New', monospace;}")
         html.write("</style></head><body>")
-        
+
         paragraphOpen = False
         # Iterate over all output items.
         for item in self.outputList:
@@ -126,7 +128,7 @@ class TransactionAnalyzer:
             elif item[:2] == "![":
                 # Image
                 closeParagraph()
-                r = parse("![Plot saved to:]({imageFileName})",item)
+                r = parse("![Plot saved to:]({imageFileName})", item)
                 # Copy the image file to a file with a name based on the html file.
                 newFImageFileName = os.path.splitext(htmlFileName)[0] + ".png"
                 shutil.copyfile(r["imageFileName"], newFImageFileName)
@@ -140,17 +142,17 @@ class TransactionAnalyzer:
                     item = item.replace("**", "<strong>", 1)
                     item = item.replace("**", "</strong>", 1)
                 # Replace spaces with nbsp in order to retain table format.
-                html.write("{}<br>\n".format(item.replace(" ","&nbsp;")))
-                
+                html.write("{}<br>\n".format(item.replace(" ", "&nbsp;")))
+
         closeParagraph()
-            
+
         html.write("</body></html>")
         html.close()
 
     # Return the transaction value from the row as a float.
     # Value may be positive(credit) or negative(debit)
     def __extractValue(self, row):
-        # There may be a unified credit/debit column or seperate cred and debit columns.
+        # There may be a unified credit/debit column or a separate credit and debit columns.
         if self.creditDebitValueColumnName is not None:
             value = row[self.creditDebitValueColumnName]
         elif self.debitValueColumnName is not None and self.creditValueColumnName is not None:
@@ -170,7 +172,7 @@ class TransactionAnalyzer:
                         value = Decimal(sub(r'[^\d.]', '', valueStr))
         else:
             print("Either self.creditDebitValueColumnName or self.debitValueColumnName and self.creditValueColumnName must not be None")
-            
+
         return float(value)
 
     # Manage the configuration file.
@@ -197,10 +199,10 @@ class TransactionAnalyzer:
             self.investmentsSet = set()
             self.dateOfBirth = ""
             self.ageOfPension = -1
-            
+
         # So we know whether or not to rewrite the configuration file.
         configurationChanged = False
-            
+
         # Get date of birth
         if len(self.dateOfBirth) == 0 and not self.testmode:
             self.dateOfBirth = input("Enter your date of birth so that we can make FIRE calculations (dd/mm/yyyy): ")
@@ -211,7 +213,7 @@ class TransactionAnalyzer:
             except ValueError:
                 print("Invalid date. Remove {} to try again.".format(configFileName))
                 self.dateOfBirth = ""
-                
+
         # Get age of pension
         if len(self.dateOfBirth) != 0 and self.ageOfPension == -1 and not self.testmode:
             ageStr = input("Enter your age when you will receive your pension (67): ")
@@ -224,7 +226,7 @@ class TransactionAnalyzer:
             except ValueError:
                 print("Invalid date. Remove {} to try again.".format(configFileName))
                 self.ageOfPension = -1
-   
+
         # Create an empty set.
         askUserSet = set()
         # Iterate over all transactions in order to gather expense types that we do not know about.
@@ -236,8 +238,8 @@ class TransactionAnalyzer:
                 break
 
             # Exclude known non-expenses.
-            if re.search(self.excludeRegex,description) != None:
-                #print("Exclude:",description)
+            if re.search(self.excludeRegex, description) != None:
+                # print("Exclude:",description)
                 continue
 
             value = self.__extractValue(row)
@@ -262,7 +264,7 @@ class TransactionAnalyzer:
                 for item in askUserList:
                     print(askUserList.index(item) + 1, item)
 
-                print("Choose one item that is an investment (and therefore not an expense), otherwise <enter>:",end = " ")
+                print("Choose one item that is an investment (and therefore not an expense), otherwise <enter>:", end=" ")
                 # If file does not exist.
                 # (A batch file can create this file in order not to wait for input.)
                 if not self.testmode:
@@ -270,17 +272,17 @@ class TransactionAnalyzer:
                     menuItem = input()
                 else:
                     menuItem = None
-                    
+
                 # If it was <enter>
                 if not menuItem:
                     # Stop asking
                     break
-                    
+
                 # Check that input is a single digit.
                 if menuItem.isdigit() and len(menuItem) != 0:
                     menuItem = int(menuItem) - 1
                     # Check range
-                    if 0 <= menuItem  <= len(askUserList):
+                    if 0 <= menuItem < len(askUserList):
                         description = askUserList[menuItem]
                         # Add it to the investments set
                         self.investmentsSet.add(description)
@@ -295,18 +297,18 @@ class TransactionAnalyzer:
             # Transfer what is left to expensesSet. We will save this so that we will never ask again.
             for expense in askUserList:
                 self.expensesSet.add(expense)
-                
+
             configurationChanged = True
 
         if configurationChanged:
             # Prepare a dictionary to save in the json file.
-            configurationDict = dict({"expenses" : list(self.expensesSet),
-                                      "investments" : list(self.investmentsSet),
-                                      "dateOfBirth" : self.dateOfBirth,
+            configurationDict = dict({"expenses": list(self.expensesSet),
+                                      "investments": list(self.investmentsSet),
+                                      "dateOfBirth": self.dateOfBirth,
                                       "ageOfPension": self.ageOfPension
                                       })
 
-            print("Saving configuration file to ",configFileName)
+            print("Saving configuration file to ", configFileName)
             f = open(configFileName, "w")
             json.dump(configurationDict, f)
             f.close()
@@ -318,7 +320,7 @@ class TransactionAnalyzer:
     # Assumptions: The transactions are from newest to oldest.
     #              There is only a single description column.
     # nonBankMonthlyExpenses - A list of tuples of the form [ expense description, value ] with an entry for each non-bank expense.
-    def analyze(self, dataframe, nonBankMonthlyExpenses = None):
+    def analyze(self, dataframe, nonBankMonthlyExpenses=None):
 
         # Check if we are in test mode by the existence of the file.
         self.testmode = exists("testmode.tmp")
@@ -331,8 +333,8 @@ class TransactionAnalyzer:
         totalMonthlyNonBankExpenses = 0
         extraordinary = 0
         income = 0
-        expensesPerMonth = [0,0,0,0,0,0,0,0,0,0,0,0]
-        salaryPerMonth = [0,0,0,0,0,0,0,0,0,0,0,0]
+        expensesPerMonth = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        salaryPerMonth = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         # Fixed number of Months. A future improvement would be to calculate this from the data.
         numberOfMonths = 12
         lastDate = " "
@@ -353,19 +355,19 @@ class TransactionAnalyzer:
             if type(description) != str or description == " ":
                 # Break out of for.
                 break
-                
+
             # Just in case there is a dirty date value we convert it to datetime.
             # Specifying self.dateFormat can fix an erroneos conversion.
-            lastDate = pd.to_datetime(row[self.dateColumnName],format=self.dateFormat)
-            #print(lastDate,"   ",row.name,"  ", row[self.dateColumnName],"   ",index)
+            lastDate = pd.to_datetime(row[self.dateColumnName], format=self.dateFormat)
+            # print(lastDate,"   ",row.name,"  ", row[self.dateColumnName],"   ",index)
 
             # On the first row record the date. This is the latest.
             if index == 0:
                 endDate = lastDate
 
             # Exclude known non-expenses and investments
-            if re.search(self.excludeRegex,description) != None or description in self.investmentsSet:
-                #print("Exclude:",description)
+            if re.search(self.excludeRegex, description) is not None or description in self.investmentsSet:
+                # print("Exclude:",description)
                 continue
 
             # Get the value.
@@ -376,26 +378,26 @@ class TransactionAnalyzer:
                 # Display and collect extraordinary expenses.
                 if value < -self.extraordinaryExpenseFloor:
                     extraordinary += value
-                    extraordinaryExpenseList.append("{} {} {}".format(lastDate,description,value))
+                    extraordinaryExpenseList.append("{} {} {}".format(lastDate, description, value))
                 else:
                     # Accumulate the monthly expenses.
-                    expensesPerMonth[dt.month -  1] -= value
+                    expensesPerMonth[dt.month - 1] -= value
                 # Accumulate the total expenses
                 totalExpenses += value
             else:  # Value > 0
-                if re.search(self.includeRegex,description) != None:
+                if re.search(self.includeRegex, description) is not None:
                     # Accumulate expenses that ere returned to your account.
                     totalExpenses += value;
-                    #print("Returned expense: ",date," ",description," ",value)
-                elif re.search(self.incomeRegex,description) != None:
+                    # print("Returned expense: ",date," ",description," ",value)
+                elif re.search(self.incomeRegex, description) is not None:
                     # Accumulate income
                     income += value
-                    salaryPerMonth[dt.month -  1] += value
+                    salaryPerMonth[dt.month - 1] += value
 
         # On the last row, record the date. This is the oldest.
         startDate = lastDate
-                
-        monthNames =  'January', 'February', 'March','April','May','June','July','August','September','October','November','December'
+
+        monthNames = 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'
 
         titleText = self.bankName + " from: " + startDate.strftime("%d/%m/%Y") + " to: " + endDate.strftime("%d/%m/%Y")
 
@@ -408,19 +410,21 @@ class TransactionAnalyzer:
         self.outputList.append("#" + titleText)
         self.outputList.append("##Expense Summary")
         self.outputList.append("Including extraordinary expenses:")
-        totalExpenseText = "Total expenses = {} Monthly = {}".format(currency(abs(totalExpenses)),currency(abs(totalExpenses)/numberOfMonths))
+        totalExpenseText = "Total expenses = {} Monthly = {}".format(currency(abs(totalExpenses)),
+                                                                     currency(abs(totalExpenses) / numberOfMonths))
         self.outputList.append(totalExpenseText)
 
         # Print again excluding extraordinary expenses.
         totalExpenses = totalExpenses - extraordinary
-        averageMonthly = abs(totalExpenses)/numberOfMonths
+        averageMonthly = abs(totalExpenses) / numberOfMonths
 
         # List the extraordinary expenses.
         self.outputList.append("")
         self.outputList.append("Excluding extraordinary expenses:")
         for item in extraordinaryExpenseList:
             self.outputList.append(item)
-        expenseText = "**Total expenses = {} Monthly = {}**".format(currency(abs(totalExpenses)),currency(averageMonthly))
+        expenseText = "**Total expenses = {} Monthly = {}**".format(currency(abs(totalExpenses)),
+                                                                    currency(averageMonthly))
         self.outputList.append(expenseText)
 
         # Print monthly values. 
@@ -429,72 +433,71 @@ class TransactionAnalyzer:
         self.outputList.append("##Monthly Summary")
         self.outputList.append("**     Month      Expenses     Income      Profit/Loss**")
         profit = 0
-        for month in range(0,numberOfMonths):
+        for month in range(0, numberOfMonths):
             # Expenses include totalMonthlyNonBankExpenses, but they are not used in Profit/Loss calculation
             # because they are already part of the salary.
             self.outputList.append("{:>10}".format(datetime.date(1900, month + 1, 1).strftime('%B')) +
-            "  - {:>10}".format(currency(abs(expensesPerMonth[month] - totalMonthlyNonBankExpenses))) +
-            "   {:>10}".format(currency(salaryPerMonth[month])) +
-            "   {:>10}".format(currency(salaryPerMonth[month] - abs(expensesPerMonth[month])))
-            )
+                                   "  - {:>10}".format(currency(abs(expensesPerMonth[month] - totalMonthlyNonBankExpenses))) +
+                                   "   {:>10}".format(currency(salaryPerMonth[month])) +
+                                   "   {:>10}".format(currency(salaryPerMonth[month] - abs(expensesPerMonth[month])))
+                                   )
             profit += salaryPerMonth[month] - abs(expensesPerMonth[month])
 
         self.outputList.append("=====================================================")
-        self.outputList.append("**Total          {:>10}".format(currency(abs(totalExpenses))) + "   {:>10}".format(currency(income)) +"   {:>10}**".format(currency(profit)))
+        self.outputList.append("**Total          {:>10}".format(currency(abs(totalExpenses))) + "   {:>10}".format(currency(income)) + "   {:>10}**".format(currency(profit)))
         self.outputList.append("=====================================================")
-            
+
         # Income
         self.outputList.append("##Income Summary")
-        monthlySalary = income/numberOfMonths
-        salaryText = "Total income = {} Monthly = {}".format(currency(abs(income)),currency(monthlySalary))
+        monthlySalary = income / numberOfMonths
+        salaryText = "Total income = {} Monthly = {}".format(currency(abs(income)), currency(monthlySalary))
         self.outputList.append(salaryText)
-
 
         # Bar chart output.
         # Put all the information on a bar chart
         data = {
             'Expenses': [],
-            'Salary':[]
+            'Salary': []
         }
-        for month in range(0,numberOfMonths):
+        for month in range(0, numberOfMonths):
             data['Expenses'].append(abs(expensesPerMonth[month] - totalMonthlyNonBankExpenses))
             data['Salary'].append(salaryPerMonth[month])
-            
-        monthlydf = pd.DataFrame(data, index=monthNames)
-        
+
+        monthlyDF = pd.DataFrame(data, index = monthNames)
+
         # Create a title with a summary of all the information gathered.
-        plotTitle = titleText  + "\n" +\
-                    salaryText + "\n" +\
+        plotTitle = titleText + "\n" + \
+                    salaryText + "\n" + \
                     expenseText
         # Create the chart.
-        ax = monthlydf.plot.barh(title=plotTitle, stacked=False, grid=True, color = {"Expenses" :"red","Salary":"green"})
+        ax = monthlyDF.plot.barh(title=plotTitle, stacked=False, grid=True, color={"Expenses": "red", "Salary": "green"})
         # Label the axis.
         ax.set_xlabel(self.currency)
         ax.set_ylabel("Month")
-        
+
         # Create plot file name.
         plotFileName = type(self).__name__ + ".png"
-            
-        plt.savefig(fname = plotFileName, bbox_inches = "tight")
+
+        plt.savefig(fname=plotFileName, bbox_inches="tight")
         self.outputList.append("![Plot saved to:]({})".format(plotFileName))
-                    
+
         # F.I.R.E
         self.outputList.append("#F.I.R.E Summary")
-        
+
         # Calculate age from date of birth
         if len(self.dateOfBirth) != 0:
             currentAge = date.today().year - time.strptime(self.dateOfBirth, '%d/%m/%Y').tm_year
         else:
             # Default if not specified.
             currentAge = 60
-           
+
         if income > 0.0:
-            self.outputList.append("You are saving {:.0%} of your income.".format(1-abs(totalExpenses/income)))
+            self.outputList.append("You are saving {:.0%} of your income.".format(1 - abs(totalExpenses / income)))
         else:
             self.outputList.append("You have no income.")
-            
+
         # Calculate a geometric series a + ar + ar**2 + ar**3 + ......
-        geometricSeries = lambda a, r, n: abs(a)*(1-r**(n+1))/(1 - r) -abs(a)
+        geometricSeries = lambda a, r, n: abs(a) * (1 - r ** (n + 1)) / (1 - r) - abs(a)
 
         inflation = 3.0
         interest = 3.0
@@ -512,21 +515,18 @@ class TransactionAnalyzer:
 
         numberOfYears = 0
 
-        for age in range(currentAge,self.ageOfPension):
-            expensesUntilPension = geometricSeries(totalExpenses, 1 + inflation/100, self.ageOfPension - age)
-            savings = geometricSeries(yearlySavings, 1 + interest/100, numberOfYears)
-            monthlyPension = abs(totalExpenses)*(1 + inflation/100)**(numberOfYears)/12
+        for age in range(currentAge, self.ageOfPension):
+            expensesUntilPension = geometricSeries(totalExpenses, 1 + inflation / 100, self.ageOfPension - age)
+            savings = geometricSeries(yearlySavings, 1 + interest / 100, numberOfYears)
+            monthlyPension = abs(totalExpenses) * (1 + inflation / 100) ** (numberOfYears) / 12
             if savings >= expensesUntilPension:
                 bold = "**"
             else:
                 bold = ""
             self.outputList.append(bold + str(age) +
-                  "   {:>20}".format(currency(expensesUntilPension))+
-                  "   {:>20}".format(currency(monthlyPension))+
-                  "   {:>20}".format(currency(savings)) +
-                  bold
-                  )
+                                   "   {:>20}".format(currency(expensesUntilPension)) +
+                                   "   {:>20}".format(currency(monthlyPension)) +
+                                   "   {:>20}".format(currency(savings)) +
+                                   bold
+                                   )
             numberOfYears += 1
-
-
-

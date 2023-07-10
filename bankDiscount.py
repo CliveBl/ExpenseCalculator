@@ -1,6 +1,6 @@
 # Generate an Excel file of your transactions as follows:
 # 1. Login to Bank in a browser
-# 2. Set to English (Hebrew can be supported by adjusted the script)
+# 2. Set to English
 # 3. Go to your Current Account transactions.
 # 4. Select 12 months of transactions using the menu.
 # 5. Select Export to Excel using the Export menu.
@@ -18,14 +18,14 @@ import webbrowser
 
 class TransactionAnalyzer_BankDiscountEnglish(TransactionAnalyzer):
     # This a bank/language specific subclass. Use it as a template for a new bank or language.
-    def __init__(self):
+    def __init__(self, creditDebitValueColumnName):
 
         self.bankName = "Bank Discount"
         self.currency = "Shekels"
 
         # Excel column names
         self.dateColumnName = "Value date"
-        self.creditDebitValueColumnName = "₪ Credit/debit "
+        self.creditDebitValueColumnName = creditDebitValueColumnName
         self.debitValueColumnName = None
         self.creditValueColumnName = None
         # There can only be a single description column, so if there are more in the data they must be combined.
@@ -63,22 +63,28 @@ class TransactionAnalyzer_BankDiscountEnglish(TransactionAnalyzer):
         
         # Anything equal to and above this is an extraordinary expense.
         # We show results that both exclude and include extraordinary expenses.
-        self.extraordinaryExpenseFloor = 10000
+        self.extraordinaryExpenseFloor = 26000
 
     # Return a DatFrame or None if the file could not be identified for this class.
     def getDataFrame(fileName):
         # Try to identify the bank/language according to the name of the file.
         # If not, we could look inside the file.
         if re.search("Current Account.*_....\.xlsx",fileName):
-                # Load spreadsheet
+            # Load spreadsheet
             xl = pd.ExcelFile(fileName)
 
-            #print(xl.sheet_names)
+            # print(xl.sheet_names)
 
             # First row is the title row of the sheet. It is 9 (Which is 8 when zero based)
             firstRow = 8
             # Load a sheet into a DataFrame by name: df1. First row is 9 (Which is 8 when zero based)
             dataframe = xl.parse("Current Account", header=firstRow)
+            # Newer sheets titles are at row 8 (Which is 7 when zero based), so we check the first column name.
+            if dataframe.columns[0] != "Date":
+                firstRow = 7
+                # Reload the sheet into a DataFrame by name.
+                dataframe = xl.parse("Current Account", header=firstRow)
+
             return dataframe
         else:
             return None
@@ -103,15 +109,15 @@ nonBankMonthlyExpenses = [\
 
 df = TransactionAnalyzer_BankDiscountEnglish.getDataFrame(fileName)
 if df is not None:
-    t = TransactionAnalyzer_BankDiscountEnglish()
+    # Pass the creditDebitValueColumnName (fourth column), because it changes from time to time.
+    t = TransactionAnalyzer_BankDiscountEnglish(df.columns[3])
     t.analyze(df, nonBankMonthlyExpenses)
-    t.renderConsole()
+    # t.renderConsole()
     htmlFile = os.path.splitext(fileName)[0] + ".html"
     t.renderHTML(htmlFile)
-    #webbrowser.open(os.path.join('file://', htmlFile))
+    webbrowser.open(os.path.join('file://', htmlFile))
 
 else:
     print("The bank could not be identified from the file: ",fileName)
     
 
-	
