@@ -1,27 +1,3 @@
-# The Effortless Monthly Expense Calculator
-#
-# By Clive Bluston
-# 2nd June 2022
-#
-#  Up until now all tools that help you calculate your monthly expenses require you to collect
-# and enter them into some sort of expense calculator. This requires a lot of effort and is
-# error prone.
-# This script extracts the information directly from your bank account transactions.
-# It will work well even if you have multiple back accounts, investments and credit cards.
-# The only condition is that all your expenses eventually land in your current account. This is
-# the case for most people.
-#
-# The script provides a framework and is used as a base class for bank specific subclasses.
-# Banks and languages can be added just by creating a new subclass of TransactionAnalyzer
-# Use TransactionAnalyzer_BankDiscountEnglish as a template.
-#
-
-# You may need to make the following installs:
-# python.exe -m pip install --upgrade pip
-# pip install pandas
-# pip install openpyxl
-# pip install matplotlib
-#
 
 # Imports
 import pandas as pd
@@ -39,12 +15,13 @@ import shutil
 import os
 
 
+# Abstract class. You need to create a subclass for each Bank.
 class TransactionAnalyzer:
-    # Abstract class. You need to create a subclass for each Bank.
 
     def __init__(self):
         self.outputList = None
 
+    # Render MD format to Console test.
     def renderConsole(self):
         if not hasattr(self, "outputList"):
             print("Please call analyze() first")
@@ -238,7 +215,7 @@ class TransactionAnalyzer:
                 break
 
             # Exclude known non-expenses.
-            if re.search(self.excludeRegex, description) != None:
+            if re.search(self.excludeRegex, description) is not None:
                 # print("Exclude:",description)
                 continue
 
@@ -357,7 +334,7 @@ class TransactionAnalyzer:
                 break
 
             # Just in case there is a dirty date value we convert it to datetime.
-            # Specifying self.dateFormat can fix an erroneos conversion.
+            # Specifying self.dateFormat can fix an erroneous conversion.
             lastDate = pd.to_datetime(row[self.dateColumnName], format=self.dateFormat)
             # print(lastDate,"   ",row.name,"  ", row[self.dateColumnName],"   ",index)
 

@@ -8,14 +8,12 @@
 # (You can run it in Windows cmd, but it does not support languages other than English)
 # python bankDiscountHebrew.py "עובר ושב_12062022_1710.xlsx"
 
-from expenseCalc import TransactionAnalyzer
-import sys
+from transactionAnalyzer import TransactionAnalyzer
 import re
 import pandas as pd
-import os
-import webbrowser
 
 class TransactionAnalyzer_BankDiscountHebrew(TransactionAnalyzer):
+
     # This a bank/language specific subclass. Use it as a template for a new bank or language.
     def __init__(self):
  
@@ -74,10 +72,10 @@ class TransactionAnalyzer_BankDiscountHebrew(TransactionAnalyzer):
         # Try to identify the bank/language according to the name of the file.
         # If not, we could look inside the file.
         if re.search("ובר ושב.*_....\.xlsx",fileName):
-                # Load spreadsheet
+            # Load spreadsheet
             xl = pd.ExcelFile(fileName)
 
-            #print(xl.sheet_names)
+            # print(xl.sheet_names)
 
             # First row is the title row of the sheet. It is 9 (Which is 8 when zero based)
             firstRow = 8
@@ -92,34 +90,3 @@ class TransactionAnalyzer_BankDiscountHebrew(TransactionAnalyzer):
             return dataframe
         else:
             return None
-
-
-# Main
-# Check arguments
-if len(sys.argv) != 2:
-    print("file: ", sys.argv[1])
-    print("Please specify an xlsx file with 12 months of transactions on the command line.")
-    exit()
-
-# First argument is the Spreadsheet filename. Ignore the rest.
-fileName = sys.argv[1]
-#print("file: ",fileName)
-
-# Customize these
-# These are expenses that are paid directly out of your salary and do not go through any bank account or credit card.
-nonBankMonthlyExpenses = [\
-                          ["Company meal card",500],\
-                          ["Company car",0],\
-                          ["Company medical insurance",0]\
-                         ]
-
-df = TransactionAnalyzer_BankDiscountHebrew.getDataFrame(fileName)
-if df is not None:
-    t = TransactionAnalyzer_BankDiscountHebrew()
-    t.analyze(df, nonBankMonthlyExpenses)
-    t.renderConsole()
-    htmlFile = os.path.splitext(fileName)[0] + ".html"
-    t.renderHTML(htmlFile)
-    #webbrowser.open(os.path.join('file://', htmlFile))
-else:
-    print("The bank could not be identified from the file: ",fileName)

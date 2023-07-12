@@ -15,29 +15,34 @@ the case for most people.
 Contributers are welcome to add support for various banks file formats. 
 
 Run as follows in Windows Terminal:
-(You can run it in Windows cmd, but it does not support languages other than English)
-python bankDiscount.py Current Account_29052022_0749.xlsx
 
+**python expenseCalculator.py Current Account_29052022_0749.xlsx**
+
+You can run it in Windows cmd, but it does not support languages other than English.
+Windows Powershell supports other languages. See testScriptForPowerShell.ps1 for examples.
+
+
+Requires Python 3.8 or above.
 
 Libraries that may need installing:
 
-\# python.exe -m pip install --upgrade pip
+ python.exe -m pip install --upgrade pip
 
-\# python.exe -m pip install -r requirements.txt
+ python.exe -m pip install -r requirements.txt
 
 or
 
-\# pip install pandas
+ pip install pandas
 
-\# pip install openpyxl
+ pip install openpyxl
 
-\# pip install matplotlib
+ pip install matplotlib
 
-\# pip install parse
+ pip install parse
 
 For pdf statements only:
 
-\# pip install tabula-py
+ pip install tabula-py
 
 Also install Java from 
 Windows: https://www.java.com/download/ie_manual.jsp

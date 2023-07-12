@@ -8,12 +8,9 @@
 # (You can run it in Windows cmd, but it does not support languages other than English)
 # python bankHapoalim.py excelNewTransactions.xlsx
 
-from expenseCalc import TransactionAnalyzer
-import sys
+from transactionAnalyzer import TransactionAnalyzer
 import re
 import pandas as pd
-import os
-import webbrowser
 
 
 class TransactionAnalyzer_BankHapoalim(TransactionAnalyzer):
@@ -78,31 +75,3 @@ class TransactionAnalyzer_BankHapoalim(TransactionAnalyzer):
             return dataframe
         else:
             return None
-            
-# Main
-# Check arguments
-if len(sys.argv) != 2:
-    print("Please specify an xlsx file with 12 months of transactions on the command line.")
-    exit()
-
-# First argument is the Spreadsheet filename. Ignore the rest.
-fileName = sys.argv[1]
-
-# Customize these
-# These are expenses that are paid directly out of your salary and do not go through any bank account or credit card.
-nonBankMonthlyExpenses = [\
-                         ]
-
-df = TransactionAnalyzer_BankHapoalim.getDataFrame(fileName)
-if df is not None:
-    t = TransactionAnalyzer_BankHapoalim()
-    t.analyze(df, nonBankMonthlyExpenses)
-    t.renderConsole()
-    htmlFile = os.path.splitext(fileName)[0] + ".html"
-    t.renderHTML(htmlFile)
-    #webbrowser.open(os.path.join('file://', htmlFile))
-
-else:
-    print("The bank could not be identified from the file: ",fileName)
-    
-

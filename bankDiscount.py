@@ -9,12 +9,10 @@
 # (You can run it in Windows cmd, but it does not support languages other than English)
 # python bankDiscount.py Current Account_29052022_0749.xlsx
 
-from expenseCalc import TransactionAnalyzer
-import sys
+from transactionAnalyzer import TransactionAnalyzer
 import re
 import pandas as pd
-import os
-import webbrowser
+
 
 class TransactionAnalyzer_BankDiscountEnglish(TransactionAnalyzer):
     # This a bank/language specific subclass. Use it as a template for a new bank or language.
@@ -88,36 +86,4 @@ class TransactionAnalyzer_BankDiscountEnglish(TransactionAnalyzer):
             return dataframe
         else:
             return None
-
-
-# Main
-# Check arguments
-if len(sys.argv) != 2:
-    print("Please specify an xlsx file with 12 months of transactions on the command line.")
-    exit()
-
-# First argument is the Spreadsheet filename. Ignore the rest.
-fileName = sys.argv[1]
-
-# Customize these
-# These are expenses that are paid directly out of your salary and do not go through any bank account or credit card.
-nonBankMonthlyExpenses = [\
-                          ["Company meal card",500],\
-                          ["Company car",0],\
-                          ["Company medical insurance",0]\
-                         ]
-
-df = TransactionAnalyzer_BankDiscountEnglish.getDataFrame(fileName)
-if df is not None:
-    # Pass the creditDebitValueColumnName (fourth column), because it changes from time to time.
-    t = TransactionAnalyzer_BankDiscountEnglish(df.columns[3])
-    t.analyze(df, nonBankMonthlyExpenses)
-    # t.renderConsole()
-    htmlFile = os.path.splitext(fileName)[0] + ".html"
-    t.renderHTML(htmlFile)
-    webbrowser.open(os.path.join('file://', htmlFile))
-
-else:
-    print("The bank could not be identified from the file: ",fileName)
-    
 
