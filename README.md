@@ -19,7 +19,7 @@ Run as follows in Windows Terminal:
 **python expenseCalculator.py Current Account_29052022_0749.xlsx**
 
 You can run it in Windows cmd, but it does not support languages other than English.
-Windows Powershell supports other languages. See testScriptForPowerShell.ps1 for examples.
+however, Windows Powershell supports other languages. See testScriptForPowerShell.ps1 for examples.
 
 
 Requires Python 3.8 or above.
@@ -45,7 +45,9 @@ For pdf statements only:
  pip install tabula-py
 
 Also install Java from 
+
 Windows: https://www.java.com/download/ie_manual.jsp
+
 Linux: sudo apt install default-jre
 
 
