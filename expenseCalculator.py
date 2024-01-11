@@ -36,24 +36,25 @@
 # Linux: sudo apt install default-jre
 #
 
+import sys
+import os
+import webbrowser
+
+###################################################################
+# One import per bank.
 import bankDiscountHebrew
 import bankDiscount
 import pepper
 import bankHapoalim
 import bankYahav
 import postalBank
-# Add imports for additional banks here.
-
-import sys
-import os
-import webbrowser
-
+####################################################################
 
 # Main
 
 # Check Python version.
 if not sys.version_info >= (3, 8):
-    print("Minimum Python version required is 3.8. Upu are running:")
+    print("Minimum Python version required is 3.8. You are running:")
     print(sys.version_info)
     exit()
 
@@ -64,15 +65,13 @@ if len(sys.argv) != 2:
 
 # First argument is the Spreadsheet filename. Ignore the rest.
 fileName = sys.argv[1]
-print("file: ",fileName)
 
-# Customize these
-# These are expenses that are paid directly out of your salary and do not go through any bank account or credit card.
-nonBankMonthlyExpenses = [\
-                          ["Company meal card",500],\
-                          ["Company car",0],\
-                          ["Company medical insurance",154]\
-                         ]
+# Check that the file exists.
+if os.path.isfile(fileName):
+    print("Using file: ", os.path.abspath(fileName))
+else:
+    print("File does not exist: ",os.path.abspath(fileName))
+    exit()
 
 # Try each bank.
 # Add a condition for each additional bank here.
@@ -91,11 +90,27 @@ elif (df := pepper.TransactionAnalyzer_Pepper.getDataFrame(fileName)) is not Non
     t = pepper.TransactionAnalyzer_Pepper()
 else:
     print("The bank could not be identified from the file: ", fileName)
-    print("You may need to add support.")
+    print("You may need to add support for the bank.")
     exit()
 
+
+# Customize these.
+# These are expenses that are paid directly out of your salary and do not go through any bank account or credit card.
+nonBankMonthlyExpenses = [\
+                          ["Company meal card",250],\
+                          ["Company car",0],\
+                          ["Company medical insurance",80]\
+                         ]
+
+# Analyze
 t.analyze(df, nonBankMonthlyExpenses)
+
+# Render to console.
 # t.renderConsole()
-htmlFile = os.path.splitext(fileName)[0] + ".html"
-t.renderHTML(htmlFile)
-webbrowser.open(os.path.join('file://', htmlFile))
+
+# Render to HTML
+htmlFileName = os.path.splitext(fileName)[0] + ".html"
+t.renderHTML(htmlFileName)
+
+# Open results in default browser. We need to use the full path otherwise it will be opened with MS IE.
+webbrowser.open(os.path.join('file://', os.path.realpath(htmlFileName)))

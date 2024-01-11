@@ -1,12 +1,15 @@
 ############################################################
 # Note: This is work in progress.
 ############################################################
-# Generate an Excel file of your transactions as follows:
-# 1. Login to Bank in a browser
-# 3. Go to your Current Account transactions.
-# 4. Select 12 months of transactions using the menu.
-# 5. Select Export to Excel using the Export menu.
-# 6. Save the file.
+# Generate a PDF file of your transactions as follows:
+# 1. Open the Pepper application on your device.
+# 3. Go to your profile using the bottom bar.
+# 4. Open "Documents" from the menu.
+# 5. Select "Generate new document" from the menu.
+# 6. Select "Details of transactions between dates".
+# 7. Select a full year.
+# 8. Wait for the document to appear in "Documents/My account".
+# 9. Send it from the Downloads folder to your computer for processing.
 # Run as follows in Windows Terminal:
 # (You can run it in Windows cmd, but it does not support languages other than English)
 # python pepper.py ".\Monthly account statement-3.pdf"
@@ -70,7 +73,7 @@ class TransactionAnalyzer_Pepper(TransactionAnalyzer):
         # Try to identify the bank/language according to the name of the file.
         # If not, we could look inside the file.
         if re.search("Monthly account statement.*\.pdf",fileName):
-            # Read the pdf. Generats a list of DataFrames.
+            # Read the pdf. Generates a list of DataFrames.
             dataframeList = tabula.read_pdf(fileName, pages='all',encoding="utf-8")
             # Count pages
             pageCount = len(dataframeList)
